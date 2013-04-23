@@ -1,3 +1,6 @@
+
+
+****************************
 whats this about
 
 well, in 2010 eyeon released fusion 6.1. with this release they published a example in the SDK which showed how to create a renderman binding to Fusion.
@@ -23,3 +26,8 @@ greetings,
  
 
 michael
+
+**************************
+be aware that there are only minor comments in the code and that for someone with more coding experience it looks rather strange what i did
+
+a list of working features can be found on my blog: http://reichofevil.wordpress.com
