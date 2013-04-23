@@ -1,0 +1,25 @@
+whats this about
+
+well, in 2010 eyeon released fusion 6.1. with this release they published a example in the SDK which showed how to create a renderman binding to Fusion.
+
+but this example was very basic and didnt cover a lot of features from fusions 3d system and not many features you can get within renderman.
+
+i was always interested in this binding and hoped that some clever folks will get it to a higher level. but nothing was released yet. so i started in look into the code and tried to get my head around it.
+
+and now i知 in big trouble! it started to write some code and modify some other parts and it worked quiet well. i知 infected and trying to spent some of my spare time to develop this further. the big problem is: i can稚 code C++ !!!! realy, i致e got nearly no idea what i知 doing. i can read some of the code and replicate it by copy and paste, but i dont know what i知 doing.
+
+at least i try my best via asking google and trial and error.
+
+and it looks i came to a point where some stuff works.
+
+ 
+
+i値l show some stuff here and will provide executables from my implementation.
+
+ 
+
+greetings,
+
+ 
+
+michael
