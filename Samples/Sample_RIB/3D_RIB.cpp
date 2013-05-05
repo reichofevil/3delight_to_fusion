@@ -31,10 +31,13 @@
 #include "3D_MaterialWard.h"
 #include "3D_MaterialFog.h"
 
-#include "3D_MaterialCook.h"
+//include my plugins here
+#include "3D_MaterialCook.h" 
 #include "3D_MaterialGlass.h"
 #include "3D_LightDirectional.h"
 #include "3D_SurfacePlane.h"
+// end of my plugins
+
 
 #include "FileIO.h"
 #include "ImageFormat.h"
@@ -924,14 +927,17 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
    rmTags.Add(RenRM_ShaderPathName, ShaderPathFile);
 
 
-	// sampling
+	// shading rate
 	double shadingRate = *InShadRate->GetValue(req);
-
+	//sampling
 	double pixelSamplesX = *InPixelSamplesX->GetValue(req);
 	double pixelSamplesY = *InPixelSamplesY->GetValue(req);
+	
+	//raytracing samples
 	double RaySamples = *InRaySamples->GetValue(req);
 	rmTags.Add(RenRM_RaySamples, RaySamples);
-
+	
+	//sampling
 	bool lockXYPixelSamples = *InLockXYPixelSamples->GetValue(req) > 0.5;
 	if (lockXYPixelSamples)
 		pixelSamplesY = pixelSamplesX;
@@ -990,19 +996,19 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 	rmTags.Add(RenRM_shutterSamples, shutterSamples);
 	rmTags.Add(RenRM_shutterStart, shutterStart);
 	rmTags.Add(RenRM_shutterEnd, shutterEnd);
-
+	//Ambient Occlussion
 	bool DoAO = *InEnableAO->GetValue(req) > 0.5;
 	float AOSamples = *InAOSamples->GetValue(req);
 	float AODepth = *InAODepth->GetValue(req);
 	rmTags.Add(RenRM_DoAO, DoAO);
 	rmTags.Add(RenRM_AOSamples, AOSamples);
 	rmTags.Add(RenRM_AODepth, AODepth);
-
+	
+	//Enviroment Map
 	Text *env_map = (Text *) InEnvMap->GetValue(req);
 	const char *envPathFile = (const char *) *(env_map);
-	//envPathFile = (const char *)*(env_map);
 	rmTags.Add(RenRM_EnvMap, envPathFile);
-
+	//Photons
 	bool DoPho = *InEnablePhotons->GetValue(req) > 0.5;
 	float PhoSamples = *InPhotonSamples->GetValue(req);
 	rmTags.Add(RenRM_DoPho, DoPho);
@@ -1018,7 +1024,7 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 	rmTags.Add(RenRM_PhoDist, PhoDist);
 	rmTags.Add(RenRM_PhoBounce, PhoBounce);
 	rmTags.Add(RenRM_PhoRays, PhoRays);
-
+	//RIB Export
 	InDoRIB = *InEnableExport->GetValue(req) > 0.5;
 	rmTags.Add(RenRM_DoRIB, InDoRIB);
 	Text *rib_file = (Text *) InExportFile->GetValue(req);
@@ -1072,6 +1078,8 @@ bool RendererRIB3D::RenderTagList(TagList &tags)
 
 			CheckAbort();									// check for user aborts (eg. user dragging a slider on an upstream tool or pressing ESC)
 			
+			//check if we actual render a image or exporting a RIB file
+			//then check for the Image bit depth to read a tiff or EXR file back
 			if(InDoRIB==false)
 			{
 				if ((IFDepth == IFLD_8bitInt)||(IFDepth == IFLD_16bitInt))	
@@ -1335,20 +1343,21 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 
    PixelAspectX = tags.GetDouble(Ren_PixelAspectX, 1.0);
    PixelAspectY = tags.GetDouble(Ren_PixelAspectY, 1.0);
-	
+	//setting AO 
    DoAO = tags.GetBool(RenRM_DoAO, false);
    AOSamples = tags.GetDouble(RenRM_AOSamples, 16.0);
 	AODepth =  tags.GetDouble(RenRM_AODepth, 100.0);
-	
+
+	//tried ROI here, but somehow i failed
 	//ROI->Set(0,0,0,0);
 	//ROI = (FuRectInt*) tags.GetPtr(Ren_RegionOfInterest, NULL);
 	//float roi_left = ROI->left;
 	//if (ROI==NULL)throw FuException3D("ROI empty");
 
-
+	//raytracing samples
 	RaySamples = tags.GetDouble(RenRM_RaySamples, 8);
 
-	//envPathMap = tags.GetString(RenRM_EnvMap,"");
+	//enviroment map and convert slashes
 	envPathMap = (const char *) tags.GetString(RenRM_EnvMap,NULL);
 	if (*envPathMap > 0)
 	{ 
@@ -1369,26 +1378,22 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 		char *pPath2 = pPath;
 		
 		CreateTempFilename( txPathFile, pPath2, "Env", "tdl");
-		//throw FuException3D(envPathMap);
-		//throw FuException3D("if");
 		}
 	else
 		{
 			//char *txPathFile;
 			txPathFile = "";
-			//throw FuException3D("else, %s", txPathFile);
 		}
-
+	//path to shader files
 	ShaderPath = (const char *) tags.GetPtr(RenRM_ShaderPathName, NULL);
-	//throw FuException3D("ShaderPathMap: %s", ShaderPath );*/
-
+	//photons
 	DoPhotons = tags.GetBool(RenRM_DoPho,false);
 	PhotonCount =tags.GetDouble(RenRM_PhoSamples,10000.0);
 	PhotonStrength = tags.GetDouble(RenRM_PhoStrength,1.0);
 	PhotonDist = tags.GetDouble(RenRM_PhoDist,1.0e36);
 	PhotonBounce = tags.GetDouble(RenRM_PhoBounce, 5);
 	PhotonRays = tags.GetDouble(RenRM_PhoRays, 64);
-
+	//rib export
 	DoRib = tags.GetBool(RenRM_DoRIB, false);
 	RibFile = (const char *) tags.GetPtr(RenRM_RibFile,NULL);
 
@@ -1439,7 +1444,7 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
    PrimaryCameraNode = (Node3D *) tags.GetPtr(Ren_CameraNode, NULL);
    if (!PrimaryCameraNode)
       throw FuException3D("invalid camera node");
-
+//DoF
 	DoDepthOfField = tags.GetBool(Ren_DoDepthOfField, false);
 	FocalDistance = tags.GetDouble(Ren_PlaneOfFocus, 4.0);		// FocalLength is a lens property, FocalDistance sets the distance where objects will be in focus
 	FStop = tags.GetDouble(RenRM_FStop, 8.0);
@@ -1448,7 +1453,7 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 	DoFAngle = tags.GetDouble(RenRM_DofAngle, 0.0);
 	DoFRoundness = tags.GetDouble(RenRM_DofRoundness, 0.0);
 	DoFDensity = tags.GetDouble(RenRM_DofDensity, 0.0);
-
+//Raytrace Hider
 	DoRaytrace = tags.GetBool(RenRM_RaytraceAll, false);
 
    // lighting and shadows
@@ -1466,7 +1471,7 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 	PixelFilterIndex = tags.GetLong(RenRM_PixelFilterIndex, PF_Gaussian);
 	PixelFilterWidth = tags.GetDouble(RenRM_PixelFilterWidth, PF_DefaultWidth[PixelFilterIndex]);
 	PixelFilterHeight = tags.GetDouble(RenRM_PixelFilterHeight, PF_DefaultWidth[PixelFilterIndex]);
-
+//MoBlur
 	DoMoBlur = tags.GetBool(RenRM_DoMoBlur, false);
 	shutterOpen = tags.GetDouble(RenRM_shutterOpen, 0.0);
 	shutterClose = tags.GetDouble(RenRM_shutterClose, 0.5);
@@ -1541,6 +1546,7 @@ void RendererRIB3D::ReleaseRenderman(RmDLL *dll)
 }
 
 void RendererRIB3D::WriteEXRToDisk(Image *img, const char *filename)
+//we write an OpenEXR file to disk
 {
 	FuPointer<Image> mapImageIn(img);	// map the images data into memory if it has been mapped out
 
@@ -1576,6 +1582,7 @@ void RendererRIB3D::WriteEXRToDisk(Image *img, const char *filename)
 }
 
 Image *RendererRIB3D::ReadEXRFromDisk(const char *filename)
+//we read an OpenEXR from disk and setting some default channels
 {
    FileIO *io = (FileIO *) ClassRegistry->New("FileIO", CT_Protocol);
 
@@ -1862,6 +1869,7 @@ void RendererRIB3D::RenderScene()
 		// install an error handler that will print errors to console
 		rm->RiErrorHandler(ReportToConsole);
 		
+		//for ROI
 		//bool ROI_NULL = ROI->IsNull();
 		//rm->RiCropWindow(ROI->left,ROI->top,ROI->right,ROI->bottom);
 		
@@ -1928,6 +1936,7 @@ void RendererRIB3D::RenderScene()
 					
 			CheckAbort();
 		}
+		//setting all the image Bit depth and output channels
 		if (OutDataType == F3D_FLOAT16)
 		{
 			rm->RiQuantize("rgba", 0, 0, 0, 0); //sets output to 16bit half float}
@@ -2022,6 +2031,8 @@ void RendererRIB3D::RenderScene()
 		//rm->RiErrorPrint();
 		
 		// add progress to commandline
+		//TODO: needs a proper handler to write to fusion console
+		//maybe rip from error handler???
 		RtToken prog_tokens1[] = { "string filename" };
 		RtPointer prog_params1[] = { "stdout" };
 		//rm->RiOptionV("statistics",1, prog_tokens1, prog_params1);
@@ -2310,8 +2321,9 @@ void RendererRIB3D::CreateRmTextures()
 		Material &mtl = MaterialList[i];
 		MtlData3D *mtlData = mtl.FuMaterial;
  
-		// We'll only deal with the "Standard Material" which is the default material that appears on the material tab of fusion's
-		// ImagePlane, Cube, Shape, ReplaceMtl, etc tools.
+		// Covered most of the Fusion materials and added some by my own
+		// think this part is very inefficent
+		// needs optimisation
 		mtl.IsSupported = (mtlData && mtlData->IsTypeOf(CLSID_MtlPhongData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlStdData))||(mtlData && mtlData->IsTypeOf(COMPANY_ID_DOT + CLSID_MtlCookData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlBlinnData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlWardData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlGlassData));
 		if (mtl.IsSupported)
 		{
@@ -3454,7 +3466,7 @@ void RendererRIB3D::CreateLightLists()
 
 			LightData3D *fuLight = (LightData3D *) (Data3D *) light.Node->Data;
 
-			if (!fuLight->IsLightProjector())					// not going to handle light projectors in this exporter - requires custom light shader
+			if (!fuLight->IsLightProjector())					// going to handle light projectors
 			{
 				rm->RiAttributeBegin();
 				FuID light_name = light.Node->GetName();
@@ -3466,6 +3478,7 @@ void RendererRIB3D::CreateLightLists()
 				RtToken name_token[] = { "string name"  };
 				RtPointer name_params[] = { &light_name };
 				rm->RiAttributeV("identifier",1,name_token, name_params);
+				//checking if light is coming from an actual light or from an env map. only "real" lights should emitt photons
 				if ((lightID == CLSID_Light_Point_Data)||(lightID == CLSID_Light_Directional_Data)||(lightID == CLSID_Light_Spot_Data)||(COMPANY_ID_DOT + CLSID_Light_Directional_Data)||(COMPANY_ID_DOT + CLSID_Light_Point_Data)){
 					if (DoPhotons){
 						char *pho_number1 = "on";
@@ -3539,7 +3552,7 @@ void RendererRIB3D::CreateLightLists()
 				}
 				itor.EndTraversal();
 			}
-			if (fuLight->IsLightProjector())					// going to handle light projectors in this exporter - requires custom light shader
+			if (fuLight->IsLightProjector())					// going to handle light projectors in this exporter
 			{
 				
 				rm->RiAttributeBegin();
