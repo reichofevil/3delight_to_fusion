@@ -78,9 +78,9 @@ public:
 
 
 
-class MtlGlassGL3D : public MtlImplGL3D
+class MtlBlinn3GL3D : public MtlImplGL3D
 {
-	FuDeclareClass(MtlGlassGL3D, MtlImplGL3D);
+	FuDeclareClass(MtlBlinn3GL3D, MtlImplGL3D);
 
 public:
 	class BlinnCg : public ShadeNodeCg
@@ -105,9 +105,9 @@ public:
 	MtlImplGL3D *BumpmapMtl;
 
 public:
-	MtlGlassGL3D(const Registry *reg, const ScriptVal &table, const TagList &tags);
-	MtlGlassGL3D(const MtlGlassGL3D &toCopy);		// purposefully left unimplemented
-	virtual ~MtlGlassGL3D();
+	MtlBlinn3GL3D(const Registry *reg, const ScriptVal &table, const TagList &tags);
+	MtlBlinn3GL3D(const MtlBlinn3GL3D &toCopy);		// purposefully left unimplemented
+	virtual ~MtlBlinn3GL3D();
 
 	virtual bool Activate(RenderContextGL3D &rc);
 
@@ -123,9 +123,9 @@ public:
 
 
 
-class MtlGlassSW3D : public MtlImplSW3D
+class MtlBlinn3SW3D : public MtlImplSW3D
 {
-	FuDeclareClass(MtlGlassSW3D, MtlImplSW3D);
+	FuDeclareClass(MtlBlinn3SW3D, MtlImplSW3D);
 
 public:
 	class BlinnBlock : public ParamBlockSW
@@ -163,9 +163,9 @@ public:
 	float32 ColorDetail;
 
 public:
-	MtlGlassSW3D(const Registry *reg, const ScriptVal &table, const TagList &tags);
-	MtlGlassSW3D(const MtlGlassSW3D &toCopy);		// purposefully left unimplemented
-	virtual ~MtlGlassSW3D();
+	MtlBlinn3SW3D(const Registry *reg, const ScriptVal &table, const TagList &tags);
+	MtlBlinn3SW3D(const MtlBlinn3SW3D &toCopy);		// purposefully left unimplemented
+	virtual ~MtlBlinn3SW3D();
 
 	virtual bool PreRender(RenderContextSW3D &rc);
 	virtual bool Activate(RenderContextSW3D &rc);

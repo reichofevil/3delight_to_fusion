@@ -52,6 +52,7 @@ enum RendererRM_Tags ENUM_TAGS
 	RenRM_AOSamples,
 	RenRM_AODepth,
 	RenRM_DoMoBlur,
+	RenRM_DoDefMoBlur,
 	RenRM_shutterSamples,
 	RenRM_shutterOpen,
 	RenRM_shutterClose,
@@ -129,6 +130,7 @@ protected:
 
 	Input *InMoBlurNest;
 	Input *InEnableMoBlur;
+	Input *InEnableDefMoBlur;
 	Input *InMoBlurSteps;
 	Input *InMoBlurOpen;
 	Input *InMoBlurClose;
@@ -286,6 +288,7 @@ protected:
 	float DoFRoundness;
 	float DoFDensity;
 	bool DoMoBlur;
+	bool DoDefMoBlur;
 	float shutterOpen;
 	float shutterClose;
 	float shutterSamples;
@@ -399,6 +402,7 @@ public:
    virtual bool RenderTagList(TagList &tags);
 
    static RtVoid ReportToConsole(RtInt code, RtInt severity, char *message);
+  static void ProgressToConsole(RtFloat i_progress);
 
 protected:
    void CheckAbort();
@@ -444,6 +448,7 @@ protected:
 	void RenderCylinder(float32 g_radius,float32 g_theta, float32 g_zmin, float32 g_zmax);
 	void RenderCone(float32 g_radius,float32 g_theta, float32 g_height);
 	void RenderRib(const char *g_path);
+	void RenderPartio(const char *g_path, float32 g_size, uint32 g_type);
 	void RenderParticles(Geometry3D *g);
 
 	RtLightHandle CreateAmbientLight(Node3D *n);

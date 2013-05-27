@@ -543,8 +543,18 @@ bool RendererRIB3D::AddInputsTagList(TagList &tags)
 		INP_MinAllowed,		0.0,
 		INP_MaxAllowed,		1.0,
 		INP_Default,			0.0,
-		ICD_Width,				0.4,
+		ICD_Width,				1.0,
 		TAG_DONE);
+
+	InEnableDefMoBlur = AddInput("DefMotionBlur", "EnableDefMoBlur",
+		LINKID_DataType,		CLSID_DataType_Number,
+		INPID_InputControl,	CHECKBOXCONTROL_ID,
+		INP_MinAllowed,		0.0,
+		INP_MaxAllowed,		1.0,
+		INP_Default,			0.0,
+		ICD_Width,				1.0,
+		TAG_DONE);
+
 
    InMoBlurSteps = AddInput("Time Samples", "MBSamples",
 		LINKID_DataType,		CLSID_DataType_Number,
@@ -765,6 +775,7 @@ void RendererRIB3D::ShowInputs(bool visible)
 		InShadRate->ShowInputControls();
 		InMoBlurNest->ShowInputControls();
 		InEnableMoBlur->ShowInputControls();
+		InEnableDefMoBlur->ShowInputControls();
 		InMoBlurSteps->ShowInputControls();
 		InMoBlurOpen->ShowInputControls();
 		InMoBlurClose->ShowInputControls();
@@ -820,6 +831,7 @@ void RendererRIB3D::ShowInputs(bool visible)
 		InShadRate->HideInputControls();
 		InMoBlurNest->HideInputControls();
 		InEnableMoBlur->HideInputControls();
+		InEnableDefMoBlur->HideInputControls();
 		InMoBlurSteps->HideInputControls();
 		InMoBlurOpen->HideInputControls();
 		InMoBlurClose->HideInputControls();
@@ -985,12 +997,14 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 	//bool isMoBlur = DoOwnMotionBlur();
 	//rmTags.Add(Ren_DoMotionBlur, isMoBlur);
 	bool DoMoBlur = *InEnableMoBlur->GetValue(req) > 0.5;
+	bool DoDefMoBlur = *InEnableDefMoBlur->GetValue(req) > 0.5;
 	double shutterOpen = *InMoBlurOpen->GetValue(req);
 	double shutterClose = *InMoBlurClose->GetValue(req);
 	double shutterSamples = *InMoBlurSteps->GetValue(req);
 	double shutterStart = *InMoBlurStart->GetValue(req);
 	double shutterEnd = *InMoBlurEnd->GetValue(req);
 	rmTags.Add(RenRM_DoMoBlur, DoMoBlur);
+	rmTags.Add(RenRM_DoDefMoBlur, DoDefMoBlur);
 	rmTags.Add(RenRM_shutterOpen, shutterOpen);
 	rmTags.Add(RenRM_shutterClose, shutterClose);
 	rmTags.Add(RenRM_shutterSamples, shutterSamples);
@@ -1305,6 +1319,19 @@ RtVoid RendererRIB3D::ReportToConsole(RtInt code, RtInt severity, char *message)
    }
 }
 
+RtVoid RendererRIB3D::ProgressToConsole(RtFloat i_progress)
+{
+   if (Ren)
+   {
+      EventConsoleSubID e = ECONID_Log;
+	  //char p_progress = (char) i_progress;
+	  Ren->Owner->DocPtr->PrintF(e, "%s : %f %% \n", Ren->Owner->GetName(), i_progress);
+	  float progress_bar = i_progress/100;
+	  Ren->Owner->SetProgress(progress_bar);
+   }
+}
+
+
 void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 {
 	// Its the job of ParseRenderAttrs() to parse the supplied taglist into class member variables.  If we wanted, we could keep around
@@ -1473,6 +1500,7 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 	PixelFilterHeight = tags.GetDouble(RenRM_PixelFilterHeight, PF_DefaultWidth[PixelFilterIndex]);
 //MoBlur
 	DoMoBlur = tags.GetBool(RenRM_DoMoBlur, false);
+	DoDefMoBlur = tags.GetBool(RenRM_DoDefMoBlur, false);
 	shutterOpen = tags.GetDouble(RenRM_shutterOpen, 0.0);
 	shutterClose = tags.GetDouble(RenRM_shutterClose, 0.5);
 	shutterSamples = tags.GetDouble(RenRM_shutterSamples, 4);
@@ -2027,20 +2055,19 @@ void RendererRIB3D::RenderScene()
 
 		// begin frame specific information
 		rm->RiFrameBegin(FrameNumber);
-		
-		//rm->RiErrorPrint();
+						
 		
 		// add progress to commandline
 		//TODO: needs a proper handler to write to fusion console
 		//maybe rip from error handler???
-		RtToken prog_tokens1[] = { "string filename" };
-		RtPointer prog_params1[] = { "stdout" };
-		//rm->RiOptionV("statistics",1, prog_tokens1, prog_params1);
+		RtPointer callBack = &ProgressToConsole;
+		rm->RiOption( "statistics", "progresscallback", &callBack, RI_NULL );
+		
 
 		int progress = 1;
 		RtToken prog_tokens[] = { "integer progress" };
 		RtPointer prog_params[] = { &progress };
-		rm->RiOptionV("statistics", 1, prog_tokens, prog_params);
+		//rm->RiOptionV("statistics", 1, prog_tokens, prog_params);
 		
 		/*int progress2 = 2;
 		RtToken prog_tokens2[] = { "integer endofframe" };
@@ -4284,7 +4311,7 @@ void RendererRIB3D::RenderNode(Node3D *n)
 				else{
 					throw FuException3D("scene_error");
 				}
-				}
+			}
 			rm->RiMotionEnd();
 		}
 		else
@@ -4297,8 +4324,8 @@ void RendererRIB3D::RenderNode(Node3D *n)
 	  
 
       RenderNode(n->Child);
-	  if(DoMoBlur) rm->RiMotionEnd;
-	  else rm->RiTransformEnd();				// restore the pushed transform
+	  //if(DoMoBlur) rm->RiMotionEnd;
+	  //else rm->RiTransformEnd();				// restore the pushed transform
 
 	  rm->RiAttributeEnd();
       RenderNode(n->Next);
@@ -4493,193 +4520,647 @@ void RendererRIB3D::RenderSurface(Node3D *n)
 						RenderRib(m_path);
 						
 					}
+				}
+				else if (data->m_RegNode->m_ID=="RoE.PartioPlaneData")
+				{
+					Input *inp = data->m_Operator->FindInput("RoE.PartioPlaneInputs.partio_path");
+					//throw FuException3D("SurfacePlaneInput found");
+					if (inp)
+					{
+						
+						Parameter *p = inp->GetSource(Document->GetCurrentTime());
+						if (p)
+						{
+							//throw FuException3D("SurfacePlaneInput found and has data");
+							//const char *path = *((Text *)p);
+							//throw FuException3D("SurfacePlaneInput found and has data: %s", path);
+							//strcpy(m_path, path); // copy the string to a char array
+							
+							// alternatively, if m_path is a CString, you could do:
+							m_path = *(Text *)p;
+							
+							p->Recycle();
+						}
+						//throw FuException3D("SurfacePlaneInput found and has data: %s", m_path);
+						RenderPartio(m_path, 1, 1);
+						
+					}
 					
 
 					//throw FuException3D("rib path 2: %s", m_path);
 					
-				}
+					}
 				else if (data->m_RegNode->m_ID=="SurfaceSphereData")
 				{
-					//throw FuException3D("shape3d sphere found");
-					Parameter *p = data->m_Operator->FindInput("SurfaceSphereInputs.Radius")->GetSource(Document->GetCurrentTime());
-					if (p)
-					{
-						m_radius = *(Number *)p;
-						p->Recycle();
-						
-					}
-					Parameter *p2 = data->m_Operator->FindInput("SurfaceSphereInputs.EndSweep")->GetSource(Document->GetCurrentTime());
-					if (p2)
-					{
-						m_theta = *(Number *)p2;
-						p2->Recycle();
-						
-					}
-					Parameter *p3 = data->m_Operator->FindInput("SurfaceSphereInputs.StartLat")->GetSource(Document->GetCurrentTime());
-					if (p3)
-					{
-						if (*(Number *)p3 >= 90.0)
-							m_zmax = 1.0*m_radius;
-						else
-							m_zmax =  *(Number *)p3 / 90.0*m_radius;
-						p3->Recycle();
-						
-					}
-					Parameter *p4 = data->m_Operator->FindInput("SurfaceSphereInputs.EndLat")->GetSource(Document->GetCurrentTime());
-					if (p4)
-					{
-						if (*(Number *)p4 <= -90.0)
-							m_zmin = -1.0*m_radius;
-						else
-							m_zmin =  *(Number *)p4 / 90.0*m_radius;
-						p4->Recycle();
-						
-					}
-					RenderSphere(m_radius, m_theta, m_zmin, m_zmax);
+							if (DoDefMoBlur&&DoMoBlur)
+							{
+								rm->RiScale(1.0f, 1.0f, -1.0f);
+								rm->RiRotate(-90,1,0, 0);
+								rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+								rm->RiTextureCoordinates(1.0,1.0, 0.0,1.0, 1.0,0.0, 0.0,0.0);
+
+								RtInt MBSamples = (RtInt) shutterSamples;
+								//RtFloat MBTimes[6];
+								for (int i = 0; i <= shutterSamples; i++)
+								{
+									MBTimes[i] = i*(1/shutterSamples);
+								}
+								rm->RiMotionBeginV(MBSamples,MBTimes);
+								for (int i = 0; i < shutterSamples; i++)
+								{ 
+									MBTimes[i] = (Scene->Time) + i*(1/shutterSamples);
+									second_scene = (Scene3D *) SceneInput->GetSource(MBTimes[i]);
+									if (second_scene){
+
+										second_scene->Setup();
+
+										Data3D *new_data = (Data3D *) second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->Data;
+										Parameter *p = new_data->m_Operator->FindInput("SurfaceSphereInputs.Radius")->GetSource(MBTimes[i]);
+										if (p)
+										{
+											m_radius = *(Number *)p;
+											p->Recycle();
+											
+										}
+										Parameter *p2 = new_data->m_Operator->FindInput("SurfaceSphereInputs.EndSweep")->GetSource(MBTimes[i]);
+										if (p2)
+										{
+											m_theta = *(Number *)p2;
+											p2->Recycle();
+											
+										}
+										Parameter *p3 = new_data->m_Operator->FindInput("SurfaceSphereInputs.StartLat")->GetSource(MBTimes[i]);
+										if (p3)
+										{
+											if (*(Number *)p3 >= 90.0)
+												m_zmax = 1.0*m_radius;
+											else
+												m_zmax =  *(Number *)p3 / 90.0*m_radius;
+											p3->Recycle();
+											
+										}
+										Parameter *p4 = new_data->m_Operator->FindInput("SurfaceSphereInputs.EndLat")->GetSource(MBTimes[i]);
+										if (p4)
+										{
+											if (*(Number *)p4 <= -90.0)
+												m_zmin = -1.0*m_radius;
+											else
+												m_zmin =  *(Number *)p4 / 90.0*m_radius;
+											p4->Recycle();
+											
+										}
+										RenderSphere(m_radius, m_theta, m_zmin, m_zmax);
+										
+									}
+									else{
+										throw FuException3D("scene_error");
+									}
+								}
+								rm->RiMotionEnd();
+							}
+							else
+							{
+								//throw FuException3D("shape3d sphere found");
+								Parameter *p = data->m_Operator->FindInput("SurfaceSphereInputs.Radius")->GetSource(Document->GetCurrentTime());
+								if (p)
+								{
+									m_radius = *(Number *)p;
+									p->Recycle();
+									
+								}
+								Parameter *p2 = data->m_Operator->FindInput("SurfaceSphereInputs.EndSweep")->GetSource(Document->GetCurrentTime());
+								if (p2)
+								{
+									m_theta = *(Number *)p2;
+									p2->Recycle();
+									
+								}
+								Parameter *p3 = data->m_Operator->FindInput("SurfaceSphereInputs.StartLat")->GetSource(Document->GetCurrentTime());
+								if (p3)
+								{
+									if (*(Number *)p3 >= 90.0)
+										m_zmax = 1.0*m_radius;
+									else
+										m_zmax =  *(Number *)p3 / 90.0*m_radius;
+									p3->Recycle();
+									
+								}
+								Parameter *p4 = data->m_Operator->FindInput("SurfaceSphereInputs.EndLat")->GetSource(Document->GetCurrentTime());
+								if (p4)
+								{
+									if (*(Number *)p4 <= -90.0)
+										m_zmin = -1.0*m_radius;
+									else
+										m_zmin =  *(Number *)p4 / 90.0*m_radius;
+									p4->Recycle();
+									
+								}
+								rm->RiScale(1.0f, 1.0f, -1.0f);
+								rm->RiRotate(-90,1,0, 0);
+								rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+								rm->RiTextureCoordinates(1.0,1.0, 0.0,1.0, 1.0,0.0, 0.0,0.0);
+								RenderSphere(m_radius, m_theta, m_zmin, m_zmax);
+							}
 				}
 				else if (data->m_RegNode->m_ID=="SurfaceTorusData")
 				{
-					Parameter *p = data->m_Operator->FindInput("SurfaceTorusInputs.Radius")->GetSource(Document->GetCurrentTime());
-					if (p)
-					{
-						m_radius = *(Number *)p;
-						p->Recycle();
-						
-					}	
-					Parameter *p2 = data->m_Operator->FindInput("SurfaceTorusInputs.Section")->GetSource(Document->GetCurrentTime());
-					if (p2)
-					{
-						m_radius2 = *(Number *)p2;
-						p2->Recycle();
-						
-					}
-					Parameter *p5 = data->m_Operator->FindInput("SurfaceTorusInputs.EndSweep")->GetSource(Document->GetCurrentTime());
-					if (p5)
-					{
-						m_theta = *(Number *)p5;
-						p5->Recycle();
-						
-					}
-					Parameter *p3 = data->m_Operator->FindInput("SurfaceTorusInputs.StartLat")->GetSource(Document->GetCurrentTime());
-					if (p3)
-					{
-						m_zmax =  *(Number *)p3;
-						p3->Recycle();
-						
-					}
-					Parameter *p4 = data->m_Operator->FindInput("SurfaceTorusInputs.EndLat")->GetSource(Document->GetCurrentTime());
-					if (p4)
-					{
-						m_zmin =  *(Number *)p4;
-						p4->Recycle();
-						
-					}
+						if (DoDefMoBlur&&DoMoBlur)
+							{
+								rm->RiScale(1.0f, 1.0f, -1.0f);
+								rm->RiRotate(-90,1,0, 0);
+								rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+								rm->RiTextureCoordinates(0.0,1.0, 1.0,1.0, 0.0,0.0, 1.0,0.0);
 
-					RenderTorus(m_radius, m_radius2, m_theta, m_zmin, m_zmax);
-				}
+								RtInt MBSamples = (RtInt) shutterSamples;
+								//RtFloat MBTimes[6];
+								for (int i = 0; i <= shutterSamples; i++)
+								{
+									MBTimes[i] = i*(1/shutterSamples);
+								}
+								rm->RiMotionBeginV(MBSamples,MBTimes);
+								for (int i = 0; i < shutterSamples; i++)
+								{ 
+									MBTimes[i] = (Scene->Time) + i*(1/shutterSamples);
+									second_scene = (Scene3D *) SceneInput->GetSource(MBTimes[i]);
+									if (second_scene){
+
+										second_scene->Setup();
+
+										Data3D *new_data = (Data3D *) second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->Data;
+										Parameter *p = new_data->m_Operator->FindInput("SurfaceTorusInputs.Radius")->GetSource(MBTimes[i]);
+									if (p)
+									{
+										m_radius = *(Number *)p;
+										p->Recycle();
+										
+									}	
+									Parameter *p2 = new_data->m_Operator->FindInput("SurfaceTorusInputs.Section")->GetSource(MBTimes[i]);
+									if (p2)
+									{
+										m_radius2 = *(Number *)p2;
+										p2->Recycle();
+										
+									}
+									Parameter *p5 = new_data->m_Operator->FindInput("SurfaceTorusInputs.EndSweep")->GetSource(MBTimes[i]);
+									if (p5)
+									{
+										m_theta = *(Number *)p5;
+										p5->Recycle();
+										
+									}
+									Parameter *p3 = new_data->m_Operator->FindInput("SurfaceTorusInputs.StartLat")->GetSource(MBTimes[i]);
+									if (p3)
+									{
+										m_zmax =  *(Number *)p3;
+										p3->Recycle();
+										
+									}
+									Parameter *p4 = new_data->m_Operator->FindInput("SurfaceTorusInputs.EndLat")->GetSource(MBTimes[i]);
+									if (p4)
+									{
+										m_zmin =  *(Number *)p4;
+										p4->Recycle();
+										
+									}
+									RenderTorus(m_radius, m_radius2, m_theta, m_zmin, m_zmax);
+								}
+								else{
+										throw FuException3D("scene_error");
+									}
+								}
+								rm->RiMotionEnd();
+							}
+							else
+							{
+								Parameter *p = data->m_Operator->FindInput("SurfaceTorusInputs.Radius")->GetSource(Document->GetCurrentTime());
+								if (p)
+								{
+									m_radius = *(Number *)p;
+									p->Recycle();
+									
+								}	
+								Parameter *p2 = data->m_Operator->FindInput("SurfaceTorusInputs.Section")->GetSource(Document->GetCurrentTime());
+								if (p2)
+								{
+									m_radius2 = *(Number *)p2;
+									p2->Recycle();
+									
+								}
+								Parameter *p5 = data->m_Operator->FindInput("SurfaceTorusInputs.EndSweep")->GetSource(Document->GetCurrentTime());
+								if (p5)
+								{
+									m_theta = *(Number *)p5;
+									p5->Recycle();
+									
+								}
+								Parameter *p3 = data->m_Operator->FindInput("SurfaceTorusInputs.StartLat")->GetSource(Document->GetCurrentTime());
+								if (p3)
+								{
+									m_zmax =  *(Number *)p3;
+									p3->Recycle();
+									
+								}
+								Parameter *p4 = data->m_Operator->FindInput("SurfaceTorusInputs.EndLat")->GetSource(Document->GetCurrentTime());
+								if (p4)
+								{
+									m_zmin =  *(Number *)p4;
+									p4->Recycle();
+									
+								}
+								rm->RiScale(1.0f, 1.0f, -1.0f);
+								rm->RiRotate(-90,1,0, 0);
+								rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+								rm->RiTextureCoordinates(0.0,1.0, 1.0,1.0, 0.0,0.0, 1.0,0.0);
+								RenderTorus(m_radius, m_radius2, m_theta, m_zmin, m_zmax);
+							}
+						}
 				else if (data->m_RegNode->m_ID=="SurfaceCylinderData")
 				{
-					Parameter *p = data->m_Operator->FindInput("SurfaceCylinderInputs.Radius")->GetSource(Document->GetCurrentTime());
-					if (p)
-					{
-						m_radius = *(Number *)p;
-						p->Recycle();
-						
-					}
-					Parameter *p2 = data->m_Operator->FindInput("SurfaceCylinderInputs.EndSweep")->GetSource(Document->GetCurrentTime());
-					if (p2)
-					{
-						m_theta = *(Number *)p2;
-						p2->Recycle();
-						
-					}
-					Parameter *p3 = data->m_Operator->FindInput("SurfaceCylinderInputs.Height")->GetSource(Document->GetCurrentTime());
-					if (p3)
-					{
-						m_Height = *(Number *)p3;
-						p3->Recycle();
-						
-					}
-					Parameter *p5 = data->m_Operator->FindInput("SurfaceCylinderInputs.BottomCap")->GetSource(Document->GetCurrentTime());
-					if (p5)
-					{
-						m_BottomCap = *(Number *)p5;
-						p5->Recycle();
-						
-					}
-					Parameter *p6 = data->m_Operator->FindInput("SurfaceCylinderInputs.TopCap")->GetSource(Document->GetCurrentTime());
-					if (p6)
-					{
-						m_TopCap = *(Number *)p6;
-						p6->Recycle();
-						
-					}
-					m_zmin = m_Height/2.0;
-					m_zmax = -m_Height/2.0;
-					if (m_BottomCap||m_TopCap)
-					{
-						RenderGeometry(geometry[i]);
-					}
-					else 
-						RenderCylinder(m_radius, m_theta, m_zmin, m_zmax);
+						if (DoDefMoBlur&&DoMoBlur)
+							{
+								Parameter *p5 = data->m_Operator->FindInput("SurfaceCylinderInputs.BottomCap")->GetSource(Document->GetCurrentTime());
+								if (p5)
+								{
+									m_BottomCap = *(Number *)p5;
+									p5->Recycle();
+									
+								}
+								Parameter *p6 = data->m_Operator->FindInput("SurfaceCylinderInputs.TopCap")->GetSource(Document->GetCurrentTime());
+								if (p6)
+								{
+									m_TopCap = *(Number *)p6;
+									p6->Recycle();
+									
+								}
+								if (!m_BottomCap&&!m_TopCap)
+										{
+											rm->RiScale(1.0f, 1.0f, -1.0f);
+											rm->RiRotate(-90,1,0, 0);
+										}
+								rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+								rm->RiTextureCoordinates(1.0,0.0, 0.0,0.0, 1.0,1.0, 0.0,1.0);
+								
+								RtInt MBSamples = (RtInt) shutterSamples;
+								//RtFloat MBTimes[6];
+								for (int a = 0; a <= shutterSamples; a++)
+								{
+									MBTimes[a] = a*(1/shutterSamples);
+								}
+								rm->RiMotionBeginV(MBSamples,MBTimes);
+								for (int b = 0; b < shutterSamples; b++)
+								{ 
+									MBTimes[b] = (Scene->Time) + b*(1/shutterSamples);
+									second_scene = (Scene3D *) SceneInput->GetSource(MBTimes[b]);
+									if (second_scene)
+									{
+
+										second_scene->Setup();
+
+										Data3D *new_data = (Data3D *) second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->Data;
+										Parameter *p = new_data->m_Operator->FindInput("SurfaceCylinderInputs.Radius")->GetSource(MBTimes[b]);
+										if (p)
+										{
+											m_radius = *(Number *)p;
+											p->Recycle();
+										}
+										Parameter *p2 = new_data->m_Operator->FindInput("SurfaceCylinderInputs.EndSweep")->GetSource(MBTimes[b]);
+										if (p2)
+										{
+											m_theta = *(Number *)p2;
+											p2->Recycle();
+											
+										}
+										Parameter *p3 = new_data->m_Operator->FindInput("SurfaceCylinderInputs.Height")->GetSource(MBTimes[b]);
+										if (p3)
+										{
+											m_Height = *(Number *)p3;
+											p3->Recycle();
+											
+										}
+										Parameter *p5 = new_data->m_Operator->FindInput("SurfaceCylinderInputs.BottomCap")->GetSource(MBTimes[b]);
+										if (p5)
+										{
+											m_BottomCap = *(Number *)p5;
+											p5->Recycle();
+											
+										}
+										Parameter *p6 = new_data->m_Operator->FindInput("SurfaceCylinderInputs.TopCap")->GetSource(MBTimes[b]);
+										if (p6)
+										{
+											m_TopCap = *(Number *)p6;
+											p6->Recycle();
+											
+										}
+										m_zmin = m_Height/2.0;
+										m_zmax = -m_Height/2.0;
+
+										if (m_BottomCap||m_TopCap)
+										{
+											Geometry3D *new_geometry = second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->GetGeometry(i, false);
+											RenderGeometry(new_geometry);
+										}
+										else 
+										{
+											RenderCylinder(m_radius, m_theta, m_zmin, m_zmax);
+										}
+									}
+								}
+										rm->RiMotionEnd();
+										
+							}
+							else
+							{
+								Parameter *p = data->m_Operator->FindInput("SurfaceCylinderInputs.Radius")->GetSource(Document->GetCurrentTime());
+								if (p)
+								{
+									m_radius = *(Number *)p;
+									p->Recycle();
+									
+								}
+								Parameter *p2 = data->m_Operator->FindInput("SurfaceCylinderInputs.EndSweep")->GetSource(Document->GetCurrentTime());
+								if (p2)
+								{
+									m_theta = *(Number *)p2;
+									p2->Recycle();
+									
+								}
+								Parameter *p3 = data->m_Operator->FindInput("SurfaceCylinderInputs.Height")->GetSource(Document->GetCurrentTime());
+								if (p3)
+								{
+									m_Height = *(Number *)p3;
+									p3->Recycle();
+									
+								}
+								Parameter *p5 = data->m_Operator->FindInput("SurfaceCylinderInputs.BottomCap")->GetSource(Document->GetCurrentTime());
+								if (p5)
+								{
+									m_BottomCap = *(Number *)p5;
+									p5->Recycle();
+									
+								}
+								Parameter *p6 = data->m_Operator->FindInput("SurfaceCylinderInputs.TopCap")->GetSource(Document->GetCurrentTime());
+								if (p6)
+								{
+									m_TopCap = *(Number *)p6;
+									p6->Recycle();
+									
+								}
+								m_zmin = m_Height/2.0;
+								m_zmax = -m_Height/2.0;
+								if (m_BottomCap||m_TopCap)
+								{
+									RenderGeometry(geometry[i]);
+								}
+								else 
+								{
+									rm->RiScale(1.0f, 1.0f, -1.0f);
+									rm->RiRotate(-90,1,0, 0);
+									rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+									rm->RiTextureCoordinates(1.0,0.0, 0.0,0.0, 1.0,1.0, 0.0,1.0);
+									RenderCylinder(m_radius, m_theta, m_zmin, m_zmax);
+								}
+							}
+
 				}
 				else if (data->m_RegNode->m_ID=="SurfaceConeData")
 				{
-					Parameter *p = data->m_Operator->FindInput("SurfaceConeInputs.Radius")->GetSource(Document->GetCurrentTime());
-					if (p)
-					{
-						m_radius = *(Number *)p;
-						p->Recycle();
-						
-					}
-					Parameter *p2 = data->m_Operator->FindInput("SurfaceConeInputs.EndSweep")->GetSource(Document->GetCurrentTime());
-					if (p2)
-					{
-						m_theta = *(Number *)p2;
-						p2->Recycle();
-						
-					}
-					Parameter *p3 = data->m_Operator->FindInput("SurfaceConeInputs.Height")->GetSource(Document->GetCurrentTime());
-					if (p3)
-					{
-						m_Height = *(Number *)p3;
-						p3->Recycle();
-						
-					}
-					Parameter *p5 = data->m_Operator->FindInput("SurfaceConeInputs.BottomCap")->GetSource(Document->GetCurrentTime());
-					if (p5)
-					{
-						m_BottomCap = *(Number *)p5;
-						p5->Recycle();
-						
-					}
-					Parameter *p6 = data->m_Operator->FindInput("SurfaceConeInputs.TopCap")->GetSource(Document->GetCurrentTime());
-					if (p6)
-					{
-						m_TopCap = *(Number *)p6;
-						p6->Recycle();
-						
-					}
-					Parameter *p7 = data->m_Operator->FindInput("SurfaceConeInputs.TopRadius")->GetSource(Document->GetCurrentTime());
-					if (p7)
-					{
-						m_radius2 = *(Number *)p7;
-						p7->Recycle();
-						
-					}
-					if (m_BottomCap||m_TopCap||(m_radius2>0.0))
-					{
-						RenderGeometry(geometry[i]);
-					}
-					else 
-						RenderCone(m_radius, m_theta, m_Height);
+						if (DoDefMoBlur&&DoMoBlur)
+							{
+								Parameter *p5 = data->m_Operator->FindInput("SurfaceConeInputs.BottomCap")->GetSource(Document->GetCurrentTime());
+								if (p5)
+								{
+									m_BottomCap = *(Number *)p5;
+									p5->Recycle();
+									
+								}
+								Parameter *p6 = data->m_Operator->FindInput("SurfaceConeInputs.TopCap")->GetSource(Document->GetCurrentTime());
+								if (p6)
+								{
+									m_TopCap = *(Number *)p6;
+									p6->Recycle();
+									
+								}
+								if (!m_BottomCap&&!m_TopCap)
+										{
+											rm->RiTranslate(0,-m_Height/2,0);
+											rm->RiScale(1.0f, 1.0f, -1.0f);
+											rm->RiRotate(-90,1,0, 0);
+											
+								}
+								rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+								rm->RiTextureCoordinates(1.0,1.0, 0.0,1.0, 1.0,0.0, 0.0,0.0);
+								
+								RtInt MBSamples = (RtInt) shutterSamples;
+								//RtFloat MBTimes[6];
+								for (int a = 0; a <= shutterSamples; a++)
+								{
+									MBTimes[a] = a*(1/shutterSamples);
+								}
+								rm->RiMotionBeginV(MBSamples,MBTimes);
+								for (int b = 0; b < shutterSamples; b++)
+								{ 
+									MBTimes[b] = (Scene->Time) + b*(1/shutterSamples);
+									second_scene = (Scene3D *) SceneInput->GetSource(MBTimes[b]);
+									if (second_scene)
+									{
+
+										second_scene->Setup();
+
+										Data3D *new_data = (Data3D *) second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->Data;
+										Parameter *p = new_data->m_Operator->FindInput("SurfaceConeInputs.Radius")->GetSource(MBTimes[b]);
+										if (p)
+										{
+											m_radius = *(Number *)p ;
+											p->Recycle();
+											
+										}
+										Parameter *p2 = new_data->m_Operator->FindInput("SurfaceConeInputs.EndSweep")->GetSource(MBTimes[b]);
+										if (p2)
+										{
+											m_theta = *(Number *)p2;
+											p2->Recycle();
+											
+										}
+										Parameter *p3 = new_data->m_Operator->FindInput("SurfaceConeInputs.Height")->GetSource(MBTimes[b]);
+										if (p3)
+										{
+											m_Height = *(Number *)p3;
+											p3->Recycle();
+											
+										}
+										Parameter *p5 = new_data->m_Operator->FindInput("SurfaceConeInputs.BottomCap")->GetSource(MBTimes[b]);
+										if (p5)
+										{
+											m_BottomCap = *(Number *)p5;
+											p5->Recycle();
+											
+										}
+										Parameter *p6 = new_data->m_Operator->FindInput("SurfaceConeInputs.TopCap")->GetSource(MBTimes[b]);
+										if (p6)
+										{
+											m_TopCap = *(Number *)p6;
+											p6->Recycle();
+											
+										}
+										Parameter *p7 = new_data->m_Operator->FindInput("SurfaceConeInputs.TopRadius")->GetSource(MBTimes[b]);
+										if (p7)
+										{
+											m_radius2 = *(Number *)p7;
+											p7->Recycle();
+											
+										}
+										if (m_BottomCap||m_TopCap||(m_radius2>0.0))
+										{
+											Geometry3D *new_geometry = second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->GetGeometry(i, false);
+											RenderGeometry(new_geometry);
+										}
+										else
+										{
+											RenderCone(m_radius, m_theta, m_Height);
+										}
+									}
+								}
+										rm->RiMotionEnd();
+							}
+							else
+							{
+								Parameter *p = data->m_Operator->FindInput("SurfaceConeInputs.Radius")->GetSource(Document->GetCurrentTime());
+								if (p)
+								{
+									m_radius = *(Number *)p;
+									p->Recycle();
+									
+								}
+								Parameter *p2 = data->m_Operator->FindInput("SurfaceConeInputs.EndSweep")->GetSource(Document->GetCurrentTime());
+								if (p2)
+								{
+									m_theta = *(Number *)p2;
+									p2->Recycle();
+									
+								}
+								Parameter *p3 = data->m_Operator->FindInput("SurfaceConeInputs.Height")->GetSource(Document->GetCurrentTime());
+								if (p3)
+								{
+									m_Height = *(Number *)p3;
+									p3->Recycle();
+									
+								}
+								Parameter *p5 = data->m_Operator->FindInput("SurfaceConeInputs.BottomCap")->GetSource(Document->GetCurrentTime());
+								if (p5)
+								{
+									m_BottomCap = *(Number *)p5;
+									p5->Recycle();
+									
+								}
+								Parameter *p6 = data->m_Operator->FindInput("SurfaceConeInputs.TopCap")->GetSource(Document->GetCurrentTime());
+								if (p6)
+								{
+									m_TopCap = *(Number *)p6;
+									p6->Recycle();
+									
+								}
+								Parameter *p7 = data->m_Operator->FindInput("SurfaceConeInputs.TopRadius")->GetSource(Document->GetCurrentTime());
+								if (p7)
+								{
+									m_radius2 = *(Number *)p7;
+									p7->Recycle();
+									
+								}
+								if (m_BottomCap||m_TopCap||(m_radius2>0.0))
+								{
+									RenderGeometry(geometry[i]);
+								}
+								else
+								{
+									rm->RiTranslate(0,-m_Height/2,0);
+									rm->RiScale(1.0f, 1.0f, -1.0f);
+									rm->RiRotate(-90,1,0, 0);
+									rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
+									rm->RiTextureCoordinates(1.0,1.0, 0.0,1.0, 1.0,0.0, 0.0,0.0);
+									RenderCone(m_radius, m_theta, m_Height);
+								}
+							}
 				}
 				else if (data->m_RegNode->m_ID=="SurfaceParticleData")
 				{
-						RenderParticles(geometry[i]);
+							
+							if (DoDefMoBlur&&DoMoBlur)
+							{
+								rm->RiSurface("particle", 0, RI_NULL, RI_NULL);
+								RtInt MBSamples = (RtInt) shutterSamples;
+								//RtFloat MBTimes[6];
+								for (int a = 0; a <= shutterSamples; a++)
+								{
+									MBTimes[a] = a*(1/shutterSamples);
+								}
+								rm->RiMotionBeginV(MBSamples,MBTimes);
+								for (int b = 0; b < shutterSamples; b++)
+								{ 
+									MBTimes[b] = (Scene->Time) + b*(1/shutterSamples);
+									second_scene = (Scene3D *) SceneInput->GetSource(MBTimes[b]);
+									if (second_scene){
+
+										second_scene->Setup();
+
+										Data3D *new_data = (Data3D *) second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->Data;
+										
+																
+										SurfaceData3D *new_surfaceData = (SurfaceData3D *) new_data;
+										Geometry3D *new_geometry = second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->GetGeometry(i, false);
+										RenderParticles(new_geometry);
+										
+									}
+									else{
+										throw FuException3D("scene_error");
+									}
+								}
+								rm->RiMotionEnd();
+							}
+							else
+							{
+								rm->RiSurface("particle", 0, RI_NULL, RI_NULL);
+								RenderParticles(geometry[i]);
+							}
 				}
 				else
-					RenderGeometry(geometry[i]);
+				{
+					if (DoDefMoBlur&&DoMoBlur)
+							{
+								RtInt MBSamples = (RtInt) shutterSamples;
+								//RtFloat MBTimes[6];
+								for (int a = 0; a <= shutterSamples; a++)
+								{
+									MBTimes[a] = a*(1/shutterSamples);
+								}
+								rm->RiMotionBeginV(MBSamples,MBTimes);
+								for (int b = 0; b < shutterSamples; b++)
+								{ 
+									MBTimes[b] = (Scene->Time) + b*(1/shutterSamples);
+									second_scene = (Scene3D *) SceneInput->GetSource(MBTimes[b]);
+									if (second_scene){
+
+										second_scene->Setup();
+
+										//Data3D *new_data = (Data3D *) second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->Data;
+										
+																
+										//SurfaceData3D *new_surfaceData = (SurfaceData3D *) new_data;
+										Geometry3D *new_geometry = second_scene->GetNodeByID(new_geo,n->ID,n->SubID)->GetGeometry(i, false);
+										RenderGeometry(new_geometry);
+										
+									}
+									else{
+										throw FuException3D("scene_error");
+									}
+								}
+								rm->RiMotionEnd();
+							}
+							else
+							{
+								RenderGeometry(geometry[i]);
+							}
+					
+				}
 			}
       }
 
@@ -5212,13 +5693,6 @@ void RendererRIB3D::RenderGeometry(Geometry3D *g)
 }
 void RendererRIB3D::RenderSphere(float32 g_radius,float32 g_theta, float32 g_zmin, float32 g_zmax)
 {	
-	//rm->RiRotate(90,1,0, 0);
-	//rm->RiRotate(-180,0,1, 0);
-	//rm->RiRotate(180,0,0, 1);
-	rm->RiScale(1.0f, 1.0f, -1.0f);
-	rm->RiRotate(-90,1,0, 0);
-	rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
-	rm->RiTextureCoordinates(1.0,1.0, 0.0,1.0, 1.0,0.0, 0.0,0.0);
 	
 	rm->RiSphereV (g_radius, g_zmin, g_zmax, g_theta, 0, NULL, NULL);
 
@@ -5226,32 +5700,15 @@ void RendererRIB3D::RenderSphere(float32 g_radius,float32 g_theta, float32 g_zmi
 
 void RendererRIB3D::RenderTorus(float32 g_radius,float32 g_radius2,float32 g_theta, float32 g_zmin, float32 g_zmax)
 {
-	rm->RiScale(1.0f, 1.0f, -1.0f);
-	rm->RiRotate(-90,1,0, 0);
-	//rm->RiRotate(90,0,1, 0);
-	//rm->RiRotate(90,0,0, 1);
-	rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
-	rm->RiTextureCoordinates(0.0,1.0, 1.0,1.0, 0.0,0.0, 1.0,0.0);
 	rm->RiTorusV (g_radius, g_radius2, g_zmin, g_zmax, g_theta,0, NULL, NULL);
 }
 
 void RendererRIB3D::RenderCylinder(float32 g_radius,float32 g_theta, float32 g_zmin, float32 g_zmax)
 {
-	rm->RiScale(1.0f, 1.0f, -1.0f);
-	rm->RiRotate(-90,1,0, 0);
-	//rm->RiRotate(90,0,1, 0);
-	//rm->RiRotate(90,0,0, 1);
-	rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
-	rm->RiTextureCoordinates(1.0,0.0, 0.0,0.0, 1.0,1.0, 0.0,1.0);
 	rm->RiCylinderV (g_radius, g_zmin, g_zmax, g_theta,0, NULL, NULL);
 }
 void RendererRIB3D::RenderCone(float32 g_radius,float32 g_theta, float32 g_height)
 {
-	rm->RiScale(1.0f, 1.0f, -1.0f);
-	rm->RiRotate(-90,1,0, 0);
-	//rm->RiRotate(-180,0,0, 1);
-	rm->RiArchiveRecord("comment","since rendermans texture coordinate system is flipped compared to Fusions");	
-	rm->RiTextureCoordinates(1.0,1.0, 0.0,1.0, 1.0,0.0, 0.0,0.0);
 	rm->RiConeV (g_height, g_radius, g_theta,0, NULL, NULL);
 }
 
@@ -5280,6 +5737,25 @@ void RendererRIB3D::RenderRib(const char* g_path)
 	rm->RiReadArchive(rib_tokens,NULL,RI_NULL);
 }
 
+void RendererRIB3D::RenderPartio(const char* g_path, float32 g_size, uint32 g_type)
+{
+	char result2[_MAX_PATH];   // array to hold the result.
+		 	
+	strcpy(result2,g_path); // copy string one into the result.
+	// change all the '\' to '/'
+	int len = strlen(result2);
+	for (int i = 0; i < len; i++)
+		if (result2[i] == '\\')
+			result2[i] = '/';
+	const char* archive_path = result2;
+	RtPointer params[2];
+	params[0] = "partio43delight_procedural";
+	params[1] = "file D:/test.geo";
+	//RtToken rib_tokens = (RtToken) result2;
+	rm->RiProcDynamicLoad( &params , NULL);
+	//rm->RiReadArchive(rib_tokens,NULL,RI_NULL);
+}
+
 void RendererRIB3D::RenderParticles(Geometry3D *g)
 {
 	try
@@ -5287,6 +5763,7 @@ void RendererRIB3D::RenderParticles(Geometry3D *g)
 		//std::vector<RtToken> tokens;
 		std::vector<RtPointer> params;
 		//tokens.push_back("P");
+		
 		params.push_back(g->GetPosition()->Tuples);
 		float32 a_out = NULL;
 		if (g->GetColor()) 
@@ -5294,7 +5771,7 @@ void RendererRIB3D::RenderParticles(Geometry3D *g)
 				Stream3D *tcStream = g->GetColor();
 				float32 *part_colors = tcStream->Tuples;	
 				float const_width[1];
-				const_width[0] = 0.1f;
+				const_width[0] = 0.01f;
 				Color4f *out_rgba = new Color4f[tcStream->NumTuples];
 				Vector3f *Part_color = new Vector3f[tcStream->NumTuples];
 				Vector3f *alpha_out = new Vector3f[tcStream->NumTuples];
@@ -5338,7 +5815,7 @@ void RendererRIB3D::RenderParticles(Geometry3D *g)
 		//rm->RiDisplacement("",RI_NULL);
 		//RtColor White = {1,1,1};
 		//rm->RiColor(White);
-		rm->RiSurface("particle", 0, RI_NULL, RI_NULL);
+		//rm->RiSurface("particle", 0, RI_NULL, RI_NULL);
 		rm->RiPointsV(g->NumPrimitives,4, tokens, (RtPointer *) &params[0]);
 		
 	}

@@ -127,10 +127,10 @@ const Registry *MtlGlassData3D::GetImplRegistry(uint32 type)
 		switch (type)
 		{
 			case CT_MtlImplSW3D:
-				ret = &MtlGlassSW3D::Reg;
+				ret = &MtlBlinn3SW3D::Reg;
 				break;
 			case CT_MtlImplGL3D:
-				ret = &MtlGlassGL3D::Reg;
+				ret = &MtlBlinn3GL3D::Reg;
 				break;
 		}
 	}
@@ -163,21 +163,21 @@ void MtlGlassData3D::Recycle()
 #undef BaseClass
 #undef ThisClass
 #define BaseClass MtlImplGL3D 
-#define ThisClass MtlGlassGL3D 
-FuRegisterClass(COMPANY_ID_DOT + CLSID_MtlGlassGL, CT_MtlImplGL3D)
-	REGS_Name,					COMPANY_ID "MtlGlassGL3D",
+#define ThisClass MtlBlinn3GL3D 
+FuRegisterClass(COMPANY_ID_DOT + CLSID_MtlBlinnGL, CT_MtlImplGL3D)
+	REGS_Name,					COMPANY_ID "MtlBlinn3GL3D",
 	REGID_MaterialLongID,	LongID_MtlGlass,
 	TAG_DONE);
 
-MtlGlassGL3D::MtlGlassGL3D(const Registry *reg, const ScriptVal &table, const TagList &tags) : BaseClass(reg, table, tags)
+MtlBlinn3GL3D::MtlBlinn3GL3D(const Registry *reg, const ScriptVal &table, const TagList &tags) : BaseClass(reg, table, tags)
 {
 }
 
-MtlGlassGL3D::~MtlGlassGL3D()
+MtlBlinn3GL3D::~MtlBlinn3GL3D()
 {
 }
 
-bool MtlGlassGL3D::CreateChildMtls(RenderContextGL3D &rc)
+bool MtlBlinn3GL3D::CreateChildMtls(RenderContextGL3D &rc)
 {
 	if (rc.ShadePath == SP_FixedFunction)
 	{
@@ -203,7 +203,7 @@ bool MtlGlassGL3D::CreateChildMtls(RenderContextGL3D &rc)
 	return true;
 }
 
-bool MtlGlassGL3D::ConnectParams(RenderContextGL3D &rc, ShaderCg *shader, ShadeNodeCg *node, ParamCg mtlStruct)
+bool MtlBlinn3GL3D::ConnectParams(RenderContextGL3D &rc, ShaderCg *shader, ShadeNodeCg *node, ParamCg mtlStruct)
 {
 	BlinnCg *sn = (BlinnCg *) node;
 
@@ -220,7 +220,7 @@ bool MtlGlassGL3D::ConnectParams(RenderContextGL3D &rc, ShaderCg *shader, ShadeN
 	return true;
 }
 
-bool MtlGlassGL3D::ConnectChildMtls(RenderContextGL3D &rc, ShaderCg *shader, ShadeNodeCg *node, ParamCg mtlStruct)
+bool MtlBlinn3GL3D::ConnectChildMtls(RenderContextGL3D &rc, ShaderCg *shader, ShadeNodeCg *node, ParamCg mtlStruct)
 {
 	BlinnCg *sn = (BlinnCg *) node;
 
@@ -286,22 +286,22 @@ bool MtlGlassGL3D::ConnectChildMtls(RenderContextGL3D &rc, ShaderCg *shader, Sha
 	return true;
 }
 
-ShadeNodeCg *MtlGlassGL3D::CreateShadeNode(RenderContextGL3D &rc)
+ShadeNodeCg *MtlBlinn3GL3D::CreateShadeNode(RenderContextGL3D &rc)
 {
 	return new BlinnCg;
 }
 
-const char *MtlGlassGL3D::GetShadeNodeName(RenderContextGL3D &rc)
+const char *MtlBlinn3GL3D::GetShadeNodeName(RenderContextGL3D &rc)
 {
 	return "FuMtlBlinn";
 }
 
-const char *MtlGlassGL3D::GetShaderFilename(RenderContextGL3D &rc)
+const char *MtlBlinn3GL3D::GetShaderFilename(RenderContextGL3D &rc)
 {
 	return "Shaders:Materials/Cg/FuMtlBlinn_f.cg";
 }
 
-bool MtlGlassGL3D::Activate(RenderContextGL3D &rc)
+bool MtlBlinn3GL3D::Activate(RenderContextGL3D &rc)
 {
 	if (rc.ShadePath == SP_FixedFunction)
 	{
@@ -360,13 +360,13 @@ bool MtlGlassGL3D::Activate(RenderContextGL3D &rc)
 #undef BaseClass
 #undef ThisClass
 #define BaseClass MtlImplSW3D 
-#define ThisClass MtlGlassSW3D 
-FuRegisterClass(COMPANY_ID_DOT + CLSID_MtlGlassSW, CT_MtlImplSW3D)
-	REGS_Name,					COMPANY_ID "MtlGlassSW",
+#define ThisClass MtlBlinn3SW3D  
+FuRegisterClass(COMPANY_ID_DOT + CLSID_MtlBlinnSW, CT_MtlImplSW3D)
+	REGS_Name,					COMPANY_ID "MtlBlinnSW",
 	REGID_MaterialLongID,	LongID_MtlGlass,
 	TAG_DONE);
 
-MtlGlassSW3D::MtlGlassSW3D(const Registry *reg, const ScriptVal &table, const TagList &tags) : BaseClass(reg, table, tags)
+MtlBlinn3SW3D::MtlBlinn3SW3D(const Registry *reg, const ScriptVal &table, const TagList &tags) : BaseClass(reg, table, tags)
 {
 	MtlGlassData3D *mtlData = (MtlGlassData3D *) tags.GetPtr(MTL_MaterialData, NULL);
 	RenderContextSW3D &rc = *((RenderContextSW3D *) tags.GetPtr(MTL_RenderContext, NULL));
@@ -405,10 +405,10 @@ MtlGlassSW3D::MtlGlassSW3D(const Registry *reg, const ScriptVal &table, const Ta
 	AlphaDetail = mtlData->AlphaDetail;
 	ColorDetail = mtlData->ColorDetail;
 
-	ShadeFunc = (ShadeFunc3D) &MtlGlassSW3D::ShadeFragment;
+	ShadeFunc = (ShadeFunc3D) &MtlBlinn3SW3D::ShadeFragment;
 }
 
-MtlGlassSW3D::~MtlGlassSW3D()
+MtlBlinn3SW3D::~MtlBlinn3SW3D()
 {
 }
 
@@ -435,7 +435,7 @@ inline static Vector3f refract(const Vector4f &p, const Vector4f &n, float etaRa
 	return refract(Vector3f(p), Vector3f(n), etaRatio);
 }
 
-ParamBlockSW *MtlGlassSW3D::CreateParamBlock(RenderContextSW3D &rc)
+ParamBlockSW *MtlBlinn3SW3D::CreateParamBlock(RenderContextSW3D &rc)
 {
 	MtlGlassData3D *mtlData = (MtlGlassData3D *) MtlData;
 
@@ -463,7 +463,7 @@ ParamBlockSW *MtlGlassSW3D::CreateParamBlock(RenderContextSW3D &rc)
 	return block;
 }
 
-void MtlGlassSW3D::ShadeFragment(ShadeContext3D &sc)
+void MtlBlinn3SW3D::ShadeFragment(ShadeContext3D &sc)
 {
 	BlinnBlock &block = (BlinnBlock &) sc.GetMaterialBlock(this);
 
@@ -596,31 +596,31 @@ void MtlGlassSW3D::ShadeFragment(ShadeContext3D &sc)
 		Color4f outColor = Mul(ambientAccum, Kd) + diffuseAccum + Mul(specularAccum, Ks);
 		outColor.A = Kd.A;
 
-		FuASSERT(!outColor.IsNaN(), ("MtlGlassSW3D::NaN output"));
+		FuASSERT(!outColor.IsNaN(), ("MtlBlinn3SW3D::NaN output"));
 
 		*block.Color = outColor;
 	}
 }
 
-bool MtlGlassSW3D::PreRender(RenderContextSW3D &rc)
+bool MtlBlinn3SW3D::PreRender(RenderContextSW3D &rc)
 {
 	return true;
 }
 
-void MtlGlassSW3D::PostRender(RenderContextSW3D &rc)
+void MtlBlinn3SW3D::PostRender(RenderContextSW3D &rc)
 {
 }
 
-bool MtlGlassSW3D::Activate(RenderContextSW3D &rc)
+bool MtlBlinn3SW3D::Activate(RenderContextSW3D &rc)
 {
 	return true;
 }
 
-void MtlGlassSW3D::Deactivate(RenderContextSW3D &rc)
+void MtlBlinn3SW3D::Deactivate(RenderContextSW3D &rc)
 {
 }
 
-void MtlGlassSW3D::Transmit(ShadeContext3D &sc)
+void MtlBlinn3SW3D::Transmit(ShadeContext3D &sc)
 {
 	BlinnBlock &block = (BlinnBlock &) sc.GetMaterialBlock(this);
 	const Vector4f &vertexColor = IsSet(block.VertexColor) ? *block.VertexColor : WHITE4F;
