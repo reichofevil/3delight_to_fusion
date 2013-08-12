@@ -464,6 +464,7 @@ public:
 	Output *OutMaterial;
 
 	MtlInputs3D *MtlInputs;
+	MtlInputs3D *MtlInputs22;
 
 public:
 	MtlOperator3D(const Registry *reg, const ScriptVal &table, const TagList &tags);

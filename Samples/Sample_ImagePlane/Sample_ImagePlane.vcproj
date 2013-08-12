@@ -2,8 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="RIB_LD"
+	Name="partio_LD"
 	ProjectGUID="{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}"
+	RootNamespace="partio_LD"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -365,11 +366,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\3D_SurfacePlane.cpp"
+				RelativePath=".\3D_PartioPlane.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\3DRIB_LD.cpp"
+				RelativePath=".\3DPartio_LD.cpp"
 				>
 			</File>
 		</Filter>
@@ -379,11 +380,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\3D_SurfacePlane.h"
+				RelativePath=".\3D_PartioPlane.h"
 				>
 			</File>
 			<File
-				RelativePath=".\3DRIB_LD.h"
+				RelativePath=".\3DPartio_LD.h"
 				>
 			</File>
 		</Filter>

@@ -271,6 +271,7 @@ class MtlGlass3D : public MtlOperator3D
 	FuDeclareClass(MtlGlass3D, MtlOperator3D);
 
 public:
+	
 
 public:
 	MtlGlass3D(const Registry *reg, const ScriptVal &table, const TagList &tags);

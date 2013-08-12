@@ -231,7 +231,7 @@ FuRegisterClass(COMPANY_ID_DOT + CLSID_Renderer_RIB, CT_Renderer3D)
    REGS_OpDescription,		"A RIB Renderer",
 	REG_Hide,					FALSE,				// this can be set to true to prevent your renderer from showing up in Renderer3D.RendererType
    //REG_SupportsDoD, TRUE,
-   //REG_SupportsDoD,			TRUE,
+   REG_SupportsDoD,			TRUE,
    REG_NoMotionBlurCtrls, TRUE,
 
 	TAG_DONE);
@@ -426,6 +426,14 @@ bool RendererRIB3D::AddInputsTagList(TagList &tags)
 	InOptionsNest = BeginControlNest("Options", "Options", false);
 
 	InRaytraceAll = AddInput("use Raytracing instead of REYES", "EnableRaytrace",
+			LINKID_DataType,		CLSID_DataType_Number,
+			INPID_InputControl,	CHECKBOXCONTROL_ID,
+			INP_MinAllowed,		0.0,
+			INP_MaxAllowed,		1.0,
+			INP_Default,			0.0,
+			TAG_DONE);
+
+	InProgCons = AddInput("output progress to console", "EnableProgCons",
 			LINKID_DataType,		CLSID_DataType_Number,
 			INPID_InputControl,	CHECKBOXCONTROL_ID,
 			INP_MinAllowed,		0.0,
@@ -798,6 +806,7 @@ void RendererRIB3D::ShowInputs(bool visible)
 		InExportFile->ShowInputControls();
 		InEnableExport->ShowInputControls();
 		InRaytraceAll->ShowInputControls();
+		InProgCons->ShowInputControls();
 		InDofNest->ShowInputControls();
 		InDofSides->ShowInputControls();
 		InDofAngle->ShowInputControls();
@@ -854,6 +863,7 @@ void RendererRIB3D::ShowInputs(bool visible)
 		InExportFile->HideInputControls();
 		InEnableExport->HideInputControls();
 		InRaytraceAll->HideInputControls();
+		InProgCons->HideInputControls();
 		InDofNest->HideInputControls();
 		InDofSides->HideInputControls();
 		InDofAngle->HideInputControls();
@@ -993,6 +1003,11 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 	bool raytrace_hidder = *InRaytraceAll->GetValue(req) > 0.5;
 	rmTags.Add(RenRM_RaytraceAll, raytrace_hidder);
 
+	//progress to console
+	bool prog_to_console = *InProgCons->GetValue(req) > 0.5;
+	rmTags.Add(RenRM_ProgCons, prog_to_console);
+
+
 	//MoBlur????
 	//bool isMoBlur = DoOwnMotionBlur();
 	//rmTags.Add(Ren_DoMotionBlur, isMoBlur);
@@ -1045,8 +1060,25 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 	const char *RibFile = (const char *) *(rib_file);
 	rmTags.Add(RenRM_RibFile, RibFile);
 
-   // merge tags supplied by Renderer3D into ours
-   rmTags.SetTags(&tags);	  
+	//ImageDomain *inROI = req->GetRoI();
+	//reqRoI->ValidWindow();
+	
+
+	//int32 *ROI_left = &ValidWindow->left;
+	//int32 *ROI_right = &ValidWindow->right;
+	//int32 *ROI_top = &ValidWindow->top;
+	//int32 *ROI_bottom = &ValidWindow->bottom;
+	//throw FuException3D("ROI: %d %d %d %d", ROI_left,ROI_top,ROI_right,ROI_bottom);
+		
+	//rmTags.Add(RenRM_ValidWindowleft, ROI_left);
+	//rmTags.Add(RenRM_ValidWindowright, ROI_right);
+	//rmTags.Add(RenRM_ValidWindowbottom, ROI_bottom);
+	//rmTags.Add(RenRM_ValidWindowtop, ROI_top);
+	
+	
+	// merge tags supplied by Renderer3D into ours
+   rmTags.SetTags(&tags);	
+
 
    
    // pass to RendererBase3D which will read more inputs and store their values in tags and then call RenderTagList()
@@ -1324,7 +1356,17 @@ RtVoid RendererRIB3D::ProgressToConsole(RtFloat i_progress)
    if (Ren)
    {
       EventConsoleSubID e = ECONID_Log;
-	  //char p_progress = (char) i_progress;
+	  //Ren->Owner->DocPtr->PrintF(e, "%s : %f %% \n", Ren->Owner->GetName(), i_progress);
+	  float progress_bar = i_progress/100;
+	  Ren->Owner->SetProgress(progress_bar);
+   }
+}
+
+RtVoid RendererRIB3D::ProgressToConsole2(RtFloat i_progress)
+{
+   if (Ren)
+   {
+      EventConsoleSubID e = ECONID_Log;
 	  Ren->Owner->DocPtr->PrintF(e, "%s : %f %% \n", Ren->Owner->GetName(), i_progress);
 	  float progress_bar = i_progress/100;
 	  Ren->Owner->SetProgress(progress_bar);
@@ -1374,12 +1416,6 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
    DoAO = tags.GetBool(RenRM_DoAO, false);
    AOSamples = tags.GetDouble(RenRM_AOSamples, 16.0);
 	AODepth =  tags.GetDouble(RenRM_AODepth, 100.0);
-
-	//tried ROI here, but somehow i failed
-	//ROI->Set(0,0,0,0);
-	//ROI = (FuRectInt*) tags.GetPtr(Ren_RegionOfInterest, NULL);
-	//float roi_left = ROI->left;
-	//if (ROI==NULL)throw FuException3D("ROI empty");
 
 	//raytracing samples
 	RaySamples = tags.GetDouble(RenRM_RaySamples, 8);
@@ -1483,6 +1519,10 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 //Raytrace Hider
 	DoRaytrace = tags.GetBool(RenRM_RaytraceAll, false);
 
+	//progress to console
+    DoProgCons = tags.GetBool(RenRM_ProgCons, false);
+
+
    // lighting and shadows
    LightingEnabled = tags.GetBool(Ren_LightingEnabled, false);
    if (LightingEnabled)
@@ -1507,6 +1547,18 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 	shutterend = tags.GetDouble(RenRM_shutterEnd, 1.0);
 	shutterstart = tags.GetDouble(RenRM_shutterStart,0.0);
 
+	//ROI
+	//RM_ROI_Left = tags.GetDouble(RenRM_ValidWindowleft,0.0);
+	//RM_ROI_Right = tags.GetDouble(RenRM_ValidWindowright,0.0);
+	//RM_ROI_Top = tags.GetDouble(RenRM_ValidWindowtop,0.0);
+	//RM_ROI_Bottom = tags.GetDouble(RenRM_ValidWindowbottom,0.0);
+	//throw FuException3D("ROI: %f %f %f %f", RM_ROI_Left,RM_ROI_Top,RM_ROI_Right,RM_ROI_Bottom);
+
+	//tried ROI here, but somehow i failed
+	//ROI->Set(0,0,0,0);
+	//ROI = (FuRectInt *) tags.GetPtr(Ren_RegionOfInterest, NULL);
+	//float roi_left = ROI->left;
+	//if (!ROI)throw FuException3D("ROI empty");
 
    // Read out the tags we put there in ProcessTagList().
    RenderFilename = (const char *) tags.GetPtr(RenRM_RenderFileName, NULL);
@@ -1959,7 +2011,7 @@ void RendererRIB3D::RenderScene()
 					result[i] = '/';
 
 			pPath = (char *) &result;
-			//throw FuException3D("env path map 1: %s", txPathFile);
+			
 			rm->RiMakeLatLongEnvironment( pPath, txPathFile, rm->RiGaussianFilter, width, width, RI_NULL);
 					
 			CheckAbort();
@@ -1986,7 +2038,10 @@ void RendererRIB3D::RenderScene()
 		// set output filename and type
 		char *file;
 		//CreateTempFilename(RenderTiff, file, "RIB", "tiff");
-		//rm->RiDisplay(RenderTiff, "tiff", "rgba", RI_NULL);
+		/*uint32 *img_data = NULL;
+
+		rm->RiDisplay( "buffer", "memory", "rgba", &img_data, RI_NULL);*/
+		
 		if (OutDataType == F3D_FLOAT32){
 			CreateTempFilename(RenderTiff, file, "RIB", "exr");
 			char *AOV1 = "zips";
@@ -2058,10 +2113,16 @@ void RendererRIB3D::RenderScene()
 						
 		
 		// add progress to commandline
-		//TODO: needs a proper handler to write to fusion console
-		//maybe rip from error handler???
-		RtPointer callBack = &ProgressToConsole;
-		rm->RiOption( "statistics", "progresscallback", &callBack, RI_NULL );
+		if (DoProgCons)
+			{
+			RtPointer callBack = &ProgressToConsole2;
+			rm->RiOption( "statistics", "progresscallback", &callBack, RI_NULL );
+			}
+		else
+			{
+				RtPointer callBack = &ProgressToConsole;
+				rm->RiOption( "statistics", "progresscallback", &callBack, RI_NULL );
+			}
 		
 
 		int progress = 1;
@@ -2351,7 +2412,7 @@ void RendererRIB3D::CreateRmTextures()
 		// Covered most of the Fusion materials and added some by my own
 		// think this part is very inefficent
 		// needs optimisation
-		mtl.IsSupported = (mtlData && mtlData->IsTypeOf(CLSID_MtlPhongData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlStdData))||(mtlData && mtlData->IsTypeOf(COMPANY_ID_DOT + CLSID_MtlCookData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlBlinnData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlWardData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlGlassData));
+		mtl.IsSupported = (mtlData && mtlData->IsTypeOf(CLSID_MtlPhongData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlStdData))||(mtlData && mtlData->IsTypeOf(COMPANY_ID_DOT + CLSID_MtlCookData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlBlinnData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlWardData))||(mtlData && mtlData->IsTypeOf(CLSID_MtlGlassData))||(mtlData && mtlData->IsTypeOf(COMPANY_ID_DOT + CLSID_MtlBlinnData));
 		if (mtl.IsSupported)
 		{
 			if (mtlData->IsTypeOf(CLSID_MtlPhongData))
@@ -2831,408 +2892,81 @@ void RendererRIB3D::CreateRmTextures()
 				}
 
 				
-			if (mtlData->IsTypeOf(COMPANY_ID_DOT + CLSID_MtlGlassData))
+			if (mtlData->IsTypeOf(COMPANY_ID_DOT + CLSID_MtlBlinnData))
+			//if (mtlData->IsTypeOf(CLSID_MtlBlinnData))
 				{
-					MtlGlassData3D *mtlGlassData = (MtlGlassData3D *) mtlData;
-					Image *img = NULL;
-					img = mtlGlassData->DiffuseImg;
+				MtlBlinnData3D *mtlBlinnData = (MtlBlinnData3D *) mtlData;
+				//if (mtlBlinnData->DiffuseMtl->IsTexture())
+				//{
+				//	Image *img = mtlBlinnData->DiffuseMtl;
+				//}
+				//else{
+				//	Image *img = NULL;
+				//}
+				Image *img = NULL;
+				Color4f diff_color = mtlBlinnData->Diffuse;
+				Color4f spec_color = mtlBlinnData->Specular;
+				float32 spec_intensity = mtlBlinnData->SpecularIntensity;
+				//throw FuException3D("Blinn zeugs: %s ", spec_intensity);
+				float32 spec_expo = mtlBlinnData->SpecularExponent;
+				float32 opacity = mtlBlinnData->Opacity;
+				float mtl_ID = mtlBlinnData->GetMaterialID();
+				//float mtl_ID = 0;
 
-					Image *spec_img1 = NULL;
-					spec_img1 = mtlGlassData->SpecColorImg;
-					
-					Image *spec_img2 = NULL;
-					spec_img2 = mtlGlassData->SpecExpoImg;
-					
-					Image *spec_img3 = NULL;
-					spec_img3 = mtlGlassData->SpecRoughImg;
-
-					Color4f diff_color = mtlGlassData->Diffuse;
-					float32 diff_rough = mtlGlassData->roughness;
-					
-					Color4f spec_color = mtlGlassData->Specular;
-					float32 spec_intensity = mtlGlassData->SpecularIntensity;
-					float32 spec_expo = mtlGlassData->SpecularExponent;
-					float32 specIOR = mtlGlassData->specIOR;
-					float32 spec_rough = mtlGlassData->specRoughness;
-					float32 opacity = mtlGlassData->Opacity;
-					
-					Image *refl_img1 = NULL;
-					refl_img1 = mtlGlassData->ReflColorImg;
-
-					Image *refl_img2 = NULL;
-					refl_img2 = mtlGlassData->ReflRoughImg;
-
-					Image *refl_img3 = NULL;
-					refl_img3 = mtlGlassData->ReflIntImg;
-
-					Image *bump_img = NULL;
-					bump_img = mtlGlassData->BumpImg;
-
-					float32 bumpy = mtlGlassData->BumpBound;
-
-					Color4f refl_color = mtlGlassData->Refl;
-					float32 refl_intensity = mtlGlassData->ReflIntensity;
-					float32 refl_rough = mtlGlassData->ReflRoughness;
-					float32 refl_dist = mtlGlassData->ReflMaxDist;
-					float32 refl_metal = mtlGlassData->ReflMetal;
-									
-					float32 refrior = mtlGlassData->RefrIOR;
-
-					int DoGI = mtlGlassData->DoGI;
-					float32 GIStrength = mtlGlassData->GIStrength;
-					
-					Color4f transmission = mtlGlassData->Transmittance;
-							
-					mtl.diff_color = diff_color;
-					mtl.diff_rough = diff_rough;
-					mtl.opacity = opacity;
-
-					mtl.spec_color = spec_color;
-					mtl.spec_expo = spec_expo;
-					mtl.spec_rough = spec_rough;
-					mtl.spec_ior = specIOR;
-					mtl.spec_int = spec_intensity;
-					
-					mtl.refl_color = refl_color;
-					mtl.refl_rough = refl_rough;
-					mtl.is_metal = refl_metal;
-					mtl.maxdist = refl_dist;
-					mtl.tansmission = transmission;
-					mtl.refl_int = refl_intensity;
-		
-					mtl.refrior = refrior;
-		
-					mtl.DoGI = DoGI;
-					mtl.GIStrength = GIStrength;
-		
-					mtl.shader_type = 3;
-
-					mtl.BumpBound = bumpy;
-
-					if (img)
-					{
-						char *tmpTexTiff = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile, *tiffFile;
-						CreateTempFilename(tiffPathFile, tiffFile, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(img, tiffPathFile);
-							
-						CheckAbort();
-						
 				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile, *txFile;
-							CreateTempFilename(txPathFile, txFile, "Tex", "tx");
-							mtl.DiffuseFile = txFile;
-							mtl.DiffusePathFile = txPathFile;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile, txPathFile, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.DiffuseFile = tiffFile;
-							mtl.DiffusePathFile = tiffPathFile;
-						}
-					}
-					if (spec_img1)
-					{
-						char *tmpTexTiff2 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx2 = NULL;			// and then convert them into this Renderman preferred .tx format
+				if (img)
+				{
+					char *tmpTexTiff = NULL;		// we'll write images from Fusion into the .tiff format
+					char *tmpTexTx = NULL;			// and then convert them into this Renderman preferred .tx format
 
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile2, *tiffFile2;
-						CreateTempFilename(tiffPathFile2, tiffFile2, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(spec_img1, tiffPathFile2);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile2, *txFile2;
-							CreateTempFilename(txPathFile2, txFile2, "Tex", "tx");
-							mtl.SpecColorFile = txFile2;
-							mtl.SpecColorPathFile = txPathFile2;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile2, txPathFile2, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.SpecColorFile = tiffFile2;
-							mtl.SpecColorPathFile = tiffPathFile2;
-						}
-					}
-					else
+					char *edge = "clamp";		
+					//char *edge = "periodic";
+	
+					char *tiffPathFile, *tiffFile;
+					CreateTempFilename(tiffPathFile, tiffFile, "Tex", "tiff");
+	
+					CheckAbort();
+	
+					WriteTiffToDisk(img, tiffPathFile);
+	
+					CheckAbort();
+	
+					if (mtl.DiffuseType == Material::Tx)
 					{
-						mtl.SpecColorFile = "";
-						mtl.SpecColorPathFile = "";
-					}
-					if (spec_img2)
-					{
-						char *tmpTexTiff3 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx3 = NULL;			// and then convert them into this Renderman preferred .tx format
+						char *txPathFile, *txFile;
+						CreateTempFilename(txPathFile, txFile, "Tex", "tx");
 
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile3, *tiffFile3;
-						CreateTempFilename(tiffPathFile3, tiffFile3, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(spec_img2, tiffPathFile3);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile3, *txFile3;
-							CreateTempFilename(txPathFile3, txFile3, "Tex", "tx");
-							mtl.SpecExpoFile = txFile3;
-							mtl.SpecExpoPathFile = txPathFile3;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile3, txPathFile3, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.SpecExpoFile = tiffFile3;
-							mtl.SpecExpoPathFile = tiffPathFile3;
-						}
-					}
-					else
-					{
-						mtl.SpecExpoFile = "";
-						mtl.SpecExpoPathFile = "";
-					}
-					if (spec_img3)
-					{
-						char *tmpTexTiff4 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx4 = NULL;			// and then convert them into this Renderman preferred .tx format
+						mtl.DiffuseFile = txFile;
+						mtl.DiffusePathFile = txPathFile;
+						mtl.spec_color = spec_color;
+						mtl.spec_int = spec_intensity;
+						mtl.spec_expo = spec_expo;
+						mtl.opacity = opacity;
+						mtl.diff_color = diff_color;
+						mtl.shader_type = 4;
+						mtl.mtlID = mtl_ID;
 
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile4, *tiffFile4;
-						CreateTempFilename(tiffPathFile4, tiffFile4, "Tex", "tiff");
-						
+						const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
+						rm->RiMakeTexture(tiffPathFile, txPathFile, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
 						CheckAbort();
-		
-						WriteTiffToDisk(spec_img3, tiffPathFile4);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile4, *txFile4;
-							CreateTempFilename(txPathFile4, txFile4, "Tex", "tx");
-							mtl.SpecRoughFile = txFile4;
-							mtl.SpecRoughPathFile = txPathFile4;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile4, txPathFile4, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.SpecRoughFile = tiffFile4;
-							mtl.SpecRoughPathFile = tiffPathFile4;
-						}
 					}
-					else
+					else if (mtl.DiffuseType == Material::Tiff)
 					{
-						mtl.SpecRoughFile = "";
-						mtl.SpecRoughPathFile = "";
-					}
-					if (refl_img1)
-					{
-						char *tmpTexTiff5 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx5 = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile5, *tiffFile5;
-						CreateTempFilename(tiffPathFile5, tiffFile5, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(refl_img1, tiffPathFile5);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile5, *txFile5;
-							CreateTempFilename(txPathFile5, txFile5, "Tex", "tx");
-							mtl.ReflColorFile = txFile5;
-							mtl.ReflColorPathFile = txPathFile5;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile5, txPathFile5, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.ReflColorFile = tiffFile5;
-							mtl.ReflColorPathFile = tiffPathFile5;
-						}
-					}
-					else
-					{
-						mtl.ReflColorFile = "";
-						mtl.ReflColorPathFile = "";
-					}
-					if (refl_img2)
-					{
-						char *tmpTexTiff6 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx6 = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile6, *tiffFile6;
-						CreateTempFilename(tiffPathFile6, tiffFile6, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(refl_img2, tiffPathFile6);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile6, *txFile6;
-							CreateTempFilename(txPathFile6, txFile6, "Tex", "tx");
-							mtl.ReflRoughFile = txFile6;
-							mtl.ReflRoughPathFile = txPathFile6;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile6, txPathFile6, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.ReflRoughFile = tiffFile6;
-							mtl.ReflRoughPathFile = tiffPathFile6;
-						}
-					}
-					else
-					{
-						mtl.ReflRoughFile = "";
-						mtl.ReflRoughPathFile = "";
-					}
-					if (refl_img3)
-					{
-						char *tmpTexTiff7 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx7 = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile7, *tiffFile7;
-						CreateTempFilename(tiffPathFile7, tiffFile7, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(refl_img3, tiffPathFile7);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile7, *txFile7;
-							CreateTempFilename(txPathFile7, txFile7, "Tex", "tx");
-							mtl.ReflIntFile = txFile7;
-							mtl.ReflIntPathFile = txPathFile7;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile7, txPathFile7, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.ReflIntFile = tiffFile7;
-							mtl.ReflIntPathFile = tiffPathFile7;
-						}
-					}
-					else
-					{
-						mtl.ReflIntFile = "";
-						mtl.ReflIntPathFile = "";
-					}
-					if (bump_img!=NULL)
-					{
-						char *tmpTexTiff8 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx8 = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile8, *tiffFile8;
-						CreateTempFilename(tiffPathFile8, tiffFile8, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(bump_img, tiffPathFile8);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile8, *txFile8;
-							CreateTempFilename(txPathFile8, txFile8, "Tex", "tx");
-							mtl.BumpFile = txFile8;
-							mtl.BumpPathFile = txPathFile8;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile8, txPathFile8, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.BumpFile = tiffFile8;
-							mtl.BumpPathFile = tiffPathFile8;
-						}
-					}
-					else
-					{
-						mtl.BumpFile = NULL;
-						mtl.BumpPathFile = NULL;
+						mtl.DiffuseFile = tiffFile;
+						mtl.DiffusePathFile = tiffPathFile;
 					}
 				}
+				else
+				{
+					mtl.spec_color = spec_color;
+					mtl.spec_int = spec_intensity;
+					mtl.spec_expo = spec_expo;
+					mtl.opacity = opacity;
+					mtl.diff_color = diff_color;
+					mtl.shader_type = 4;
+					mtl.mtlID = mtl_ID;
+				}
+			}
 
 				
 			
@@ -5300,6 +5034,8 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		Color4f Cs = mtl->diff_color;
 		Color4f Os (mtl->opacity);
 
+		float Tin = Os.A;
+
 		Color4f diffColor = mtl->diff_color;
 		const char *filename = "";
 		if (mtl->DiffuseFile)
@@ -5406,6 +5142,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			"reflRoughTex",
 			"reflIntTex",
 			"DoPho",
+			//"Tin",
 
 		};
 		
@@ -5441,6 +5178,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			(void *) &refl_rough_tex,
 			(void *) &refl_int_tex,
 			&DoPho,
+			//&Tin,
 		};
 		const char *bump_tex = "";
 		float bump_int = mtl->BumpStrength;

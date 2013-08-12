@@ -1251,15 +1251,15 @@ MtlGlass3D::MtlGlass3D(const Registry *reg, const ScriptVal &table, const TagLis
 {
 	if (m_RegNode == &MtlGlass3D::Reg)	// other materials may derive this material so be careful not to set MtlInputs twice
 	{
-		MtlInputs = (MtlGlassInputs3D *) MtlGlassInputs3D::Reg.New(table, tags);
-		RegisterInputs(MtlInputs);
+		MtlInputs22 = (MtlGlassInputs3D *) MtlGlassInputs3D::Reg.New(table, tags);
+		RegisterInputs(MtlInputs22);
 		//MtlInputs->AddInputs();  -- no, Glass has special handling to add inputs in OnAddToFlow()
 	}
 }
 
 MtlGlass3D::~MtlGlass3D()
 {
-	SAFE_RECYCLE(MtlInputs);
+	SAFE_RECYCLE(MtlInputs22);
 }
 
 bool MtlGlass3D::RegInit(Registry *regnode)
@@ -1299,11 +1299,11 @@ void MtlGlass3D::NotifyChanged(Input *in, Parameter *param, TimeStamp time, TagL
 void MtlGlass3D::OnAddToFlow(TagList *tags)
 {
 	// add the inputs - we do this here in OnAddToFlow because we can't do it in the ctor since AddInputs() calls virtual functions
-	if (MtlInputs)
+	if (MtlInputs22)
 	{
-		MtlInputs->BeginAddInputs();
-		MtlInputs->AddInputs();
-		MtlInputs->EndAddInputs();
+		MtlInputs22->BeginAddInputs();
+		MtlInputs22->AddInputs();
+		MtlInputs22->EndAddInputs();
 	}
 
 	BaseClass::OnAddToFlow(tags);

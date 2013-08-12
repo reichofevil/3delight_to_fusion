@@ -192,6 +192,8 @@ public:
 	Input *InDiffuseB;
 	Input *InAlpha;
 	Input *InOpacity;
+	Input *InDiffuseRoughness;
+	Input *InDiffuseScale;
 	Input *InDiffuseMtl;
 
 	Input *InSpecularNest;
@@ -204,6 +206,10 @@ public:
 	Input *InSpecularColorMtl;
 	Input *InSpecularIntensityMtl;
 	Input *InSpecularExponentMtl;
+	Input *InSpecularGloss; 
+	Input *InSpecularSamples;
+	Input *InSpecMetal;
+	Input *InSpecHigh;
 
 	Input *InBumpmapMtl;
 
@@ -215,6 +221,14 @@ public:
 	Input *InTransmittanceColorDetail;
 	Input *InShowTransmittanceMtlInput;
 	//Input *InTransmittanceMtl;
+	Input *InRefrGlossSamples;
+	Input *InRefrIOR;
+	Input *InRefrGloss;
+	Input *InBRDF_Curve;
+	Input *InBRDF_0;
+	Input *InBRDF_90;
+	Input *InBRDF_Enrg;
+	Input *InReflBRDF;
 
 	Input *InReceivesLighting, *InReceivesShadows;
 	Input *InUseTwoSidedLighting;

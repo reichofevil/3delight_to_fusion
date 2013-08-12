@@ -33,7 +33,7 @@
 #include "3D_MaterialConstant.h"
 
 
-static const FuID LongID_MtlBlinn = COMPANY_ID "MtlBlinn";			// All of the classes associated with MtlBlinn will add this REGID_MaterialLongID tag to their registry lists.
+static const FuID LongID_MtlBlinn = COMPANY_ID "MtlArch";			// All of the classes associated with MtlBlinn will add this REGID_MaterialLongID tag to their registry lists.
 
 
 //
@@ -42,7 +42,7 @@ static const FuID LongID_MtlBlinn = COMPANY_ID "MtlBlinn";			// All of the class
 //
 //
 FuRegisterClass(COMPANY_ID_DOT + CLSID_MtlBlinnData, CT_MtlData3D)
-	REGS_Name,					COMPANY_ID "MtlBlinnData",
+	REGS_Name,					COMPANY_ID_SPACE "MtlArch",
 	REGID_MaterialLongID,	LongID_MtlBlinn,
 	TAG_DONE);
 
@@ -857,12 +857,34 @@ void MtlBlinnInputs3D::AddDiffuseBlinnInputs()
 
 		EndGroup();
 
-		InOpacity = AddInput("Opacity", "Opacity", 
+		//InOpacity = AddInput("Opacity", "Opacity", 
+		//	LINKID_DataType,			CLSID_DataType_Number, 
+		//	INPID_InputControl,		SLIDERCONTROL_ID,
+		//	LINKID_LegacyID,			FuID(".Opacity"),
+		//	I3D_AutoFlags,				PF_AutoProcess,
+		//	INP_Default,				DefaultOpacity,
+		//	INP_MinAllowed,			0.0,
+		//	INP_MinScale,				0.0,
+		//	INP_MaxScale,				1.0,
+		//	TAG_DONE);
+
+		InDiffuseRoughness = AddInput("Diffuse Roughness", "DiffRough", 
 			LINKID_DataType,			CLSID_DataType_Number, 
 			INPID_InputControl,		SLIDERCONTROL_ID,
-			LINKID_LegacyID,			FuID(".Opacity"),
+			LINKID_LegacyID,			FuID(".DiffRough"),
 			I3D_AutoFlags,				PF_AutoProcess,
-			INP_Default,				DefaultOpacity,
+			INP_Default,				0.5,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			TAG_DONE);
+
+		InDiffuseScale = AddInput("Diffuse Scale", "DiffScale", 
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".DiffScale"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				0.8,
 			INP_MinAllowed,			0.0,
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
@@ -945,7 +967,7 @@ void MtlBlinnInputs3D::AddSpecularBlinnInputs(bool addSpecularExponent)
 		INP_MinAllowed,			0.0,
 		INP_MinScale,				0.0,
 		INP_MaxScale,				1.0,
-		INP_Default,				1.0,
+		INP_Default,				0.5,
 		TAG_DONE);
 
 	InSpecularIntensityMtl = AddInput("Specular Intensity Material", "Intensity.Material",
@@ -958,6 +980,33 @@ void MtlBlinnInputs3D::AddSpecularBlinnInputs(bool addSpecularExponent)
 		LINK_Main,					MMID_SpecularIntensity,
 		INP_Required,				FALSE, 
 		TAG_DONE);
+	
+	InSpecularGloss = AddInput("Specular Gloss", "SpecGloss", 
+		LINKID_DataType,			CLSID_DataType_Number,
+		INPID_InputControl,		SLIDERCONTROL_ID,
+		LINKID_LegacyID,			FuID(".SpecularGloss"),
+		I3D_AutoFlags,				PF_AutoProcess,
+		//I3D_ParamName,				FuID("SpecularIntensity"),
+		INP_MinAllowed,			0.0,
+		INP_MinScale,				0.0,
+		INP_MaxScale,				1.0,
+		INP_Default,				1.0,
+		TAG_DONE);
+
+	InSpecularSamples = AddInput("Specular Gloss Samples", "SpecGlossSample", 
+		LINKID_DataType,			CLSID_DataType_Number,
+		INPID_InputControl,		SLIDERCONTROL_ID,
+		LINKID_LegacyID,			FuID(".SpecularGlossSamples"),
+		I3D_AutoFlags,				PF_AutoProcess,
+		//I3D_ParamName,				FuID("SpecularIntensity"),
+		INP_Integer,			TRUE,
+		INP_MinAllowed,			0.0,
+		INP_MinScale,				0.0,
+		INP_MaxScale,				10.0,
+		INP_Default,				2.0,
+		TAG_DONE);
+
+
 
 
 	if (addSpecularExponent)
@@ -986,6 +1035,21 @@ void MtlBlinnInputs3D::AddSpecularBlinnInputs(bool addSpecularExponent)
 			INP_Required,				FALSE, 
 			TAG_DONE);
 	}
+	InSpecMetal = AddInput("Is Metal", "SpecMetal", 
+		LINKID_DataType,			CLSID_DataType_Number,
+		INPID_InputControl,		CHECKBOXCONTROL_ID,
+		I3D_AutoFlags,				PF_AutoProcess,
+		INP_Default,				0.0,
+		ICD_Width,					0.5,
+		TAG_DONE);
+
+	InSpecHigh = AddInput("Highlights only", "SpecHigh", 
+		LINKID_DataType,			CLSID_DataType_Number,
+		INPID_InputControl,		CHECKBOXCONTROL_ID,
+		I3D_AutoFlags,				PF_AutoProcess,
+		INP_Default,				0.0,
+		ICD_Width,					0.5,
+		TAG_DONE);
 }
 
 void MtlBlinnInputs3D::EndSpecularBlinnNest()
@@ -1072,6 +1136,52 @@ void MtlBlinnInputs3D::AddTransmittanceBlinnInputs()
 
 		EndGroup();
 
+		InOpacity = AddInput("Opacity", "Opacity", 
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".Opacity"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				DefaultOpacity,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			TAG_DONE);
+
+		InRefrGloss = AddInput("Refraction Gloss", "RefrGloss", 
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".RefrGloss"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				1.0,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			TAG_DONE);
+
+		InRefrIOR = AddInput("Refraction IOR", "RefrIOR", 
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".RefrIOR"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				1.3,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				2.0,
+			TAG_DONE);
+
+		InRefrGlossSamples = AddInput("Refraction Gloss Samples", "RefrGlossSamples", 
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".RefrGlossSamples"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Integer,			TRUE,
+			INP_Default,				2.0,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				10.0,
+			TAG_DONE);
+
+
 		InTransmittanceAlphaDetail = AddInput("Alpha Detail", "AlphaDetail",
 			LINKID_DataType,			CLSID_DataType_Number,
 			INPID_InputControl,		SLIDERCONTROL_ID,
@@ -1105,6 +1215,55 @@ void MtlBlinnInputs3D::AddTransmittanceBlinnInputs()
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
 			INP_Default,				1.0,
+			TAG_DONE);
+
+		InReflBRDF = AddInput("brdf fresnel", "ReflBRDF", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				0.0,
+			ICD_Width,					0.5,
+			TAG_DONE);
+
+		InBRDF_Enrg = AddInput("conserve enrg", "BRDF_Enrg", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				1.0,
+			ICD_Width,					0.5,
+			TAG_DONE);
+
+		InBRDF_90 = AddInput("BRDF 90", "BRDF_90",
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".BRDF_90"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				1.0,
+			TAG_DONE);
+
+		InBRDF_0 = AddInput("BRDF 0", "BRDF_0",
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".BRDF_0"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0.8,
+			TAG_DONE);
+
+		InBRDF_Curve = AddInput("BRDF Curve", "BRDF_Curve",
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".BRDF_Curve"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				5.0,
+			INP_Default,				2.0,
 			TAG_DONE);
 
 	EndGroup();

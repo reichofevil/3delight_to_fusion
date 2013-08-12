@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="LightingModels-Shaders"
-	ProjectGUID="{5CBAFB8B-EC7C-4810-8357-E7BE15F19130}"
+	Name="RIB_LD"
+	ProjectGUID="{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -152,7 +152,7 @@
 				OutputFile="$(OutDir)\$(ProjectName)_x64.plugin"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\lib64"
+				AdditionalLibraryDirectories="D:\downloads\FusionSDK_6.1.0.697\Fusion6.1SDK\lib64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -318,7 +318,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="eyeonSystem.lib eyeonScript.lib opengl32.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_x64.plugin"
+				OutputFile="$(OutDir)\$(ProjectName).plugin"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="..\..\lib"
@@ -360,28 +360,30 @@
 	</References>
 	<Files>
 		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			>
+			<File
+				RelativePath=".\3D_SurfacePlane.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\3DRIB_LD.cpp"
+				>
+			</File>
+		</Filter>
+		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\3D_MaterialBlinn.h"
+				RelativePath=".\3D_SurfacePlane.h"
 				>
 			</File>
 			<File
-				RelativePath=".\3D_MaterialCook.h"
-				>
-			</File>
-			<File
-				RelativePath=".\3D_MaterialGlass.h"
-				>
-			</File>
-			<File
-				RelativePath=".\3D_MaterialPhong.h"
-				>
-			</File>
-			<File
-				RelativePath=".\3D_MaterialWard.h"
+				RelativePath=".\3DRIB_LD.h"
 				>
 			</File>
 		</Filter>
@@ -390,24 +392,6 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-		</Filter>
-		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
-			>
-			<File
-				RelativePath=".\3D_MaterialBlinn.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\3D_MaterialCook.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\3D_MaterialGlass.cpp"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>

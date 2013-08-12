@@ -4,7 +4,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_AmbientLight", "Samp
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EnvLight", "Sample_DirectionalLight\Sample_DirectionalLight.vcproj", "{D87933D5-43DE-4223-BA8D-C6676BFE059F}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RIB_LD", "Sample_ImagePlane\Sample_ImagePlane.vcproj", "{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "partio_LD", "Sample_ImagePlane\Sample_ImagePlane.vcproj", "{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LightingModels-Shaders", "Sample_LightingModels\Sample_LightingModels.vcproj", "{5CBAFB8B-EC7C-4810-8357-E7BE15F19130}"
 EndProject
@@ -19,6 +19,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PhysicalSkyLight", "Sample_DirectionalLight_3\Sample_DirectionalLight_3.vcproj", "{8447C3B6-81BA-49D0-91D9-218FF32B3DBB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sample_DirectionalLight_2", "Kopie von Sample_DirectionalLight\Sample_DirectionalLight_2.vcproj", "{8F8FEEA8-50DB-4C50-B9C0-CB14580F30C3}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RIB_LD", "RIB_LD\RIB_LD.vcproj", "{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,7 +48,8 @@ Global
 		{D87933D5-43DE-4223-BA8D-C6676BFE059F}.Release|x64.Build.0 = Release|x64
 		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Debug|Win32.ActiveCfg = Debug|Win32
 		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Debug|Win32.Build.0 = Debug|Win32
-		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Debug|x64.ActiveCfg = Debug|Win32
+		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Debug|x64.ActiveCfg = Debug|x64
+		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Debug|x64.Build.0 = Debug|x64
 		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Release|Win32.ActiveCfg = Release|Win32
 		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Release|Win32.Build.0 = Release|Win32
 		{902BE5BC-6A2E-42B1-90FD-B820DE58E34D}.Release|x64.ActiveCfg = Release|Win32
@@ -102,6 +105,14 @@ Global
 		{8F8FEEA8-50DB-4C50-B9C0-CB14580F30C3}.Release|Win32.Build.0 = Release|Win32
 		{8F8FEEA8-50DB-4C50-B9C0-CB14580F30C3}.Release|x64.ActiveCfg = Release|x64
 		{8F8FEEA8-50DB-4C50-B9C0-CB14580F30C3}.Release|x64.Build.0 = Release|x64
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Debug|Win32.Build.0 = Debug|Win32
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Debug|x64.ActiveCfg = Debug|x64
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Debug|x64.Build.0 = Debug|x64
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Release|Win32.ActiveCfg = Release|Win32
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Release|Win32.Build.0 = Release|Win32
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Release|x64.ActiveCfg = Release|x64
+		{FC817A4A-B613-4EC8-8C9F-DA7951EF4A8A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -70,6 +70,7 @@ enum RendererRM_Tags ENUM_TAGS
 	RenRM_RibFile,
 	RenRM_DoRIB,
 	RenRM_RaytraceAll,
+	RenRM_ProgCons,
 	RenRM_ROI,
 	RenRM_ValidWindowleft,
 	RenRM_ValidWindowright,
@@ -161,6 +162,7 @@ protected:
 	Input *SceneInput;
 
 	Input *InRaytraceAll;
+	Input *InProgCons;
 
 	#ifdef MULTI_OUT
 		Output *OutCaustics;
@@ -315,7 +317,7 @@ protected:
 	const char* RibFile2;
 	char* RibFile_edit;
 
-	bool DoRaytrace;
+	bool DoRaytrace, DoProgCons;
 
 
 
@@ -346,6 +348,10 @@ protected:
 	FuRectInt *ValidWindow;
 	FuRectInt *ROI;
 	bool DoROI;
+	float RM_ROI_Left;
+	float RM_ROI_Right;
+	float RM_ROI_Top;
+	float RM_ROI_Bottom;
 
 
 	//AutoImageRoI reqRoI;
@@ -403,6 +409,7 @@ public:
 
    static RtVoid ReportToConsole(RtInt code, RtInt severity, char *message);
   static void ProgressToConsole(RtFloat i_progress);
+  static void ProgressToConsole2(RtFloat i_progress);
 
 protected:
    void CheckAbort();
