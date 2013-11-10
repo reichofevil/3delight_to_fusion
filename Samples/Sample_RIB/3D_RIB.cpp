@@ -2502,6 +2502,22 @@ void RendererRIB3D::CreateRmTextures()
 
 					Color4f diff_color = mtlCookData->Diffuse;
 					float32 diff_rough = mtlCookData->roughness;
+
+					Color4f i_Incan = mtlCookData->Incan;
+
+					Color4f i_coat_color = mtlCookData->CoatingColor;
+					float32 i_coat_rough = mtlCookData->CoatingRough;
+					float32 i_CoatingOn = mtlCookData->CoatingOn;;
+					float32 i_CoatIOR = mtlCookData->CoatIOR;
+					float32 i_CoatSamples = mtlCookData->CoatSamples;
+					Color4f i_CoatTrans = mtlCookData->CoatTrans;
+					float32 i_CoatingThick = mtlCookData->CoatingThick;
+					float32 i_CoatingEnv = mtlCookData->CoatingEnv;
+					float32 i_CoatingSpec = mtlCookData->CoatingSpec;
+					float32 i_CoatingRefl = mtlCookData->CoatingRefl;
+					float32 i_FogStrength = mtlCookData->FogStrength;
+					Color4f i_ReflFog = mtlCookData->ReflFog;
+					float32 i_RefraSamples = mtlCookData->RefraSamples;
 					
 					Color4f spec_color = mtlCookData->Specular;
 					float32 spec_intensity = mtlCookData->SpecularIntensity;
@@ -2509,15 +2525,18 @@ void RendererRIB3D::CreateRmTextures()
 					float32 specIOR = mtlCookData->specIOR;
 					float32 spec_rough = mtlCookData->specRoughness;
 					float32 opacity = mtlCookData->Opacity;
+					float32 i_SpecularEnv = mtlCookData->SpecularEnv;
+					float32 i_SpecularRefl = mtlCookData->SpecularRefl;
+					float32 i_SpecularSpec = mtlCookData->SpecularSpec;
+					float32 i_SpecSamples = mtlCookData->SpecSamples;
+					Color4f i_ReflAniso = mtlCookData->ReflAniso;
+					float32 i_SpecularAniso = mtlCookData->SpecularAniso;
 					
 					Image *refl_img1 = NULL;
 					refl_img1 = mtlCookData->ReflColorImg;
 
 					Image *refl_img2 = NULL;
 					refl_img2 = mtlCookData->ReflRoughImg;
-
-					Image *refl_img3 = NULL;
-					refl_img3 = mtlCookData->ReflIntImg;
 
 					Image *bump_img = NULL;
 					bump_img = mtlCookData->BumpImg;
@@ -2526,10 +2545,7 @@ void RendererRIB3D::CreateRmTextures()
 					float32 bump_int = mtlCookData->BumpStrength;
 
 					Color4f refl_color = mtlCookData->Refl;
-					float32 refl_intensity = mtlCookData->ReflIntensity;
 					float32 refl_rough = mtlCookData->ReflRoughness;
-					float32 refl_dist = mtlCookData->ReflMaxDist;
-					float32 refl_metal = mtlCookData->ReflMetal;
 									
 					float32 refrior = mtlCookData->RefrIOR;
 
@@ -2537,23 +2553,37 @@ void RendererRIB3D::CreateRmTextures()
 					float32 GIStrength = mtlCookData->GIStrength;
 					
 					Color4f transmission = mtlCookData->Transmittance;
+
+					Color4f i_SSS_Color = mtlCookData->SSS_color;
+					float32 i_SSS_on = mtlCookData->SSS_on;
+					float32 i_SSSIOR = mtlCookData->SSSIOR;
+					float32 i_SSSStrength = mtlCookData->SSSStrength;
+					float32 i_SSSScale = mtlCookData->SSSScale;
 							
 					mtl.diff_color = diff_color;
 					mtl.diff_rough = diff_rough;
 					mtl.opacity = opacity;
+					mtl.Incan = i_Incan;
 
 					mtl.spec_color = spec_color;
 					mtl.spec_expo = spec_expo;
 					mtl.spec_rough = spec_rough;
 					mtl.spec_ior = specIOR;
 					mtl.spec_int = spec_intensity;
+					mtl.SpecularEnv = i_SpecularEnv;
+					mtl.SpecularRefl = i_SpecularRefl;
+					mtl.SpecularSpec = i_SpecularSpec;
+					mtl.SpecSamples = i_SpecSamples;
+					mtl.ReflAniso = i_ReflAniso;
+					mtl.SpecularAniso = i_SpecularAniso;
 					
 					mtl.refl_color = refl_color;
 					mtl.refl_rough = refl_rough;
-					mtl.is_metal = refl_metal;
-					mtl.maxdist = refl_dist;
 					mtl.tansmission = transmission;
-					mtl.refl_int = refl_intensity;
+
+					mtl.FogStrength = i_FogStrength;
+					mtl.ReflFog = i_ReflFog;
+					mtl.RefraSamples = i_RefraSamples;
 		
 					mtl.refrior = refrior;
 		
@@ -2564,6 +2594,26 @@ void RendererRIB3D::CreateRmTextures()
 
 					mtl.BumpBound = bumpy;
 					mtl.BumpStrength = bump_int;
+
+					mtl.CoatingColor = i_coat_color;
+					mtl.CoatingOn = i_CoatingOn;
+					mtl.CoatIOR = i_CoatIOR;
+					mtl.CoatSamples = i_CoatSamples;
+					mtl.CoatTrans = i_CoatTrans;
+					mtl.CoatingThick = i_CoatingThick;
+					mtl.CoatingRough = i_coat_rough;
+					mtl.CoatingEnv = i_CoatingEnv;
+					mtl.CoatingSpec = i_CoatingSpec;
+					mtl.CoatingRefl = i_CoatingRefl;
+
+					mtl.SSS_color = i_SSS_Color;
+					mtl.SSS_on = i_SSS_on;
+					mtl.SSSIOR = i_SSSIOR;
+					mtl.SSSScale = i_SSSScale;
+					mtl.SSSStrength = i_SSSStrength;
+
+
+
 
 					if (img)
 					{
@@ -2805,47 +2855,6 @@ void RendererRIB3D::CreateRmTextures()
 					{
 						mtl.ReflRoughFile = "";
 						mtl.ReflRoughPathFile = "";
-					}
-					if (refl_img3)
-					{
-						char *tmpTexTiff7 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx7 = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile7, *tiffFile7;
-						CreateTempFilename(tiffPathFile7, tiffFile7, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(refl_img3, tiffPathFile7);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile7, *txFile7;
-							CreateTempFilename(txPathFile7, txFile7, "Tex", "tx");
-							mtl.ReflIntFile = txFile7;
-							mtl.ReflIntPathFile = txPathFile7;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile7, txPathFile7, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.ReflIntFile = tiffFile7;
-							mtl.ReflIntPathFile = tiffPathFile7;
-						}
-					}
-					else
-					{
-						mtl.ReflIntFile = "";
-						mtl.ReflIntPathFile = "";
 					}
 					
 					if (bump_img!=NULL)
@@ -3177,10 +3186,10 @@ void RendererRIB3D::CreateLightLists()
 			float32 maxdist = PhotonDist;
 			const int nParams = 4;
 			RtToken tokens[nParams] = { 
-				"samples",
-				"finalgather",
-				"intensity",
-				"maxdist"};
+				"float samples",
+				"float finalgather",
+				"float intensity",
+				"float maxdist"};
 			RtPointer params[nParams] = { 
 				&samples, 
 				&fg, 
@@ -3396,8 +3405,8 @@ RtLightHandle RendererRIB3D::CreateAmbientLight(Node3D *n)
 
 	RtToken tokens[nParams] = 
 	{ 
-		"intensity", 
-		"lightcolor", 
+		"float intensity", 
+		"color lightcolor", 
 	};
 
    RtPointer params[nParams] = 
@@ -3429,12 +3438,12 @@ RtLightHandle RendererRIB3D::CreateEnvLight(Node3D *n)
 
    RtToken tokens[nParams] = 
 	{  
-		"samples", 
-		"envmap", 
-		"Kenv",
-		"Kocc",
-		"to",
-		"from",
+		"float samples", 
+		"string envmap", 
+		"float Kenv",
+		"float Kocc",
+		"point to",
+		"point from",
 		//"light_color",
 	};
 
@@ -3480,13 +3489,13 @@ RtLightHandle RendererRIB3D::CreateDirectionalLight2(Node3D *n)
 
    RtToken tokens[nParams] = 
 	{ 
-		"atten", 
-		"lightcolor", 
-		"from", 
-		"to",
-		"shadowname",
-		"samples",
-		"blur"
+		"float atten", 
+		"colorlightcolor", 
+		"point from", 
+		"point to",
+		"string shadowname",
+		"float samples",
+		"float blur"
 	};
 
    RtPointer params[nParams] = 
@@ -3520,12 +3529,12 @@ RtLightHandle RendererRIB3D::CreateDirectionalLight(Node3D *n)
 
    RtToken tokens[nParams] = 
 	{ 
-		"atten", 
-		"lightcolor", 
-		"from", 
-		"to",
-		"shadowname",
-		"samples",
+		"float atten", 
+		"color lightcolor", 
+		"point from", 
+		"point to",
+		"string shadowname",
+		"float samples",
 	};
 
    RtPointer params[nParams] = 
@@ -3571,10 +3580,10 @@ RtLightHandle RendererRIB3D::CreatePointLight(Node3D *n)
 
    RtToken tokens[nParams] = 
 	{ 
-		"intensity", 
-		"lightcolor", 
-		"from" ,
-		"decay"
+		"float intensity", 
+		"color lightcolor", 
+		"point from" ,
+		"float decay"
 	};
 
    RtPointer params[nParams] = 
@@ -3630,13 +3639,13 @@ RtLightHandle RendererRIB3D::CreatePointLight2(Node3D *n)
 	}
    RtToken tokens[nParams] = 
 	{ 
-		"intensity", 
-		"lightcolor", 
-		"from" ,
-		"decay",
-		"samples",
-		"shadow_on",
-		"blur"
+		"float intensity", 
+		"color lightcolor", 
+		"point from" ,
+		"float decay",
+		"float samples",
+		"float shadow_on",
+		"float blur"
    };
 
    RtPointer params[nParams] = 
@@ -3701,16 +3710,16 @@ RtLightHandle RendererRIB3D::CreateSpotLight(Node3D *n)
 
 	RtToken tokens[nParams] = 
 		{ 
-			"intensity", 
-			"lightcolor", 
-			"from",
-			"to",
-			"coneangle",
-			"conedeltaangle",
-			"beamdistribution",
-			"shadowmap",
-			"samples",
-			"decay",
+			"float intensity", 
+			"color lightcolor", 
+			"point from",
+			"point to",
+			"float coneangle",
+			"float conedeltaangle",
+			"float beamdistribution",
+			"string shadowmap",
+			"float samples",
+			"float decay",
 		//	"blur",
 		};
 
@@ -3735,14 +3744,14 @@ RtLightHandle RendererRIB3D::CreateSpotLight(Node3D *n)
 		const int nParams = 8;
 		RtToken tokens[nParams] = 
 		{ 
-			"intensity", 
-			"lightcolor", 
-			"from",
-			"to",
-			"coneangle",
-			"conedeltaangle",
-			"beamdistribution",
-			"decay",
+			"float intensity", 
+			"color lightcolor", 
+			"point from",
+			"point to",
+			"float coneangle",
+			"float conedeltaangle",
+			"float beamdistribution",
+			"float decay",
 		//	"shadowmap",
 		//	"samples",
 		//	"blur",
@@ -3889,10 +3898,10 @@ RtLightHandle RendererRIB3D::CreateProjectorLight(Node3D *n)
 			"slidename",
 			//"from",
 			//"to",
-			"beamdistribution",
-			"decay",
-			"shadowmap",
-			"samples",
+			"float beamdistribution",
+			"float decay",
+			"string shadowmap",
+			"float samples",
 		};
 
 	   RtPointer params[nParams] = 
@@ -3917,16 +3926,16 @@ RtLightHandle RendererRIB3D::CreateProjectorLight(Node3D *n)
 		const int nParams = 7;
 		RtToken tokens[nParams] = 
 		{ 
-			"fov",
+			"float fov",
 			//"up",
-			"aspect",
-			"intensity",
-			"fit_type",
-			"slidename",
+			"float aspect",
+			"float intensity",
+			"string fit_type",
+			"string slidename",
 			//"from",
 			//"to",
-			"beamdistribution",
-			"decay",
+			"float beamdistribution",
+			"float decay",
 		};
 
 	   RtPointer params[nParams] = 
@@ -4936,18 +4945,18 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		
 		RtToken tokens[n] =
 		{
-			"Kd",
-			"Ks",
-			"Ka",
-			"roughness",
-			"specularcolor",
-			"occ_samples",
-			"maxdist",
+			"float Kd",
+			"float Ks",
+			"float Ka",
+			"float roughness",
+			"color specularcolor",
+			"float occ_samples",
+			"float maxdist",
 			//"samples",
 			//"envname",
-			"DoAO",
-			"materialID",
-			"diff_mapname",
+			"float DoAO",
+			"float materialID",
+			"string diff_mapname",
 			
 		};
 		
@@ -4997,16 +5006,16 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		
 		RtToken tokens[n] =
 		{
-			"Kd",
-			"Ks",
-			"Ka",
-			"roughness",
-			"specularcolor",
-			"occ_samples",
-			"maxdist",
-			"DoAO",
-			"materialID",
-			"diff_mapname",
+			"float Kd",
+			"float Ks",
+			"float Ka",
+			"float roughness",
+			"color specularcolor",
+			"float occ_samples",
+			"float maxdist",
+			"float DoAO",
+			"float materialID",
+			"string diff_mapname",
 			
 		};
 		
@@ -5033,7 +5042,11 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 	{
 		Color4f Cs = mtl->diff_color;
 		Color4f Os (mtl->opacity);
-
+		Color4f transpa (1);
+		transpa.R = 1-Os.R;
+		transpa.G = 1-Os.G;
+		transpa.B = 1-Os.B;
+		transpa.A = 1-Os.A;
 		float Tin = Os.A;
 
 		Color4f diffColor = mtl->diff_color;
@@ -5076,6 +5089,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		}
 
 		float diff_roughness = mtl->diff_rough;
+		//throw FuException3D("diff rough: %d", &diff_roughness);
 
 		Color4f specColor = mtl->spec_color;
 		float spec_roughness = mtl->spec_rough;
@@ -5085,10 +5099,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		float refl_rough = mtl->refl_rough;
 		float raysamples = RaySamples;
 		if (Proxy>1) raysamples /= Proxy;
-		float metal = mtl->is_metal;
-		//float nrg = mtl->nrg;
-		//float colorspace = mtl->colorspace;
-		float max_dist = mtl->maxdist;
+		
 		Color4f transm = mtl->tansmission;
 
 		float refr_ior = mtl->refrior;
@@ -5106,79 +5117,122 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		float Do_AO = DoAO;
 		float DoPho = 0;
 		if ((DoPhotons)||(enableGI==1)) DoPho = 1.0;
+
+		float ia_coating_on = mtl->CoatingOn;
+		Color4f ia_coating_color = mtl->CoatingColor;
+		float ia_coating_roughness = mtl->CoatingRough;
+		float ia_coating_ior = mtl->CoatIOR;
+		float ia_coating_samples = mtl->CoatSamples;
+		Color4f ia_coating_transmittance = mtl->CoatTrans;
+		float ia_coating_thickness = mtl->CoatingThick;
+
+		float32 ia_SpecularEnv = mtl->SpecularEnv;
+		float32 ia_SpecularRefl = mtl->SpecularRefl;
+		float32 ia_SpecularSpec = mtl->SpecularSpec;
+		float32 ia_SpecSamples = mtl->SpecSamples;
+		Color4f ia_ReflAniso = mtl->ReflAniso;
+		float32 ia_SpecularAniso = mtl->SpecularAniso;
+
+		float32 ia_refract_fog_strength = mtl->FogStrength;
+		Color4f ia_refract_fog_color = mtl->ReflFog;
+		float32 ia_RefraSamples = mtl->RefraSamples;
+
+		float32 ia_CoatingEnv = mtl->CoatingEnv;
+		float32 ia_CoatingSpec = mtl->CoatingSpec;
+		float32 ia_CoatingRefl = mtl->CoatingRefl;
+
+		Color4f ia_SSS_Color = mtl->SSS_color;
+		float32 ia_SSS_on = mtl->SSS_on;
+		float32 ia_SSSIOR = mtl->SSSIOR;
+		float32 ia_SSSStrength = mtl->SSSStrength;
+		float32 ia_SSSScale = mtl->SSSScale;
+
+
+
+		Color4f ia_incandescence = mtl->Incan;
 	
-		const int n = 28;
+		const int n = 36;
 		//throw FuException3D("env path map 3: %s", txPathFile);
+
 		
 		RtToken tokens[n] =
 		{
-			"diffColor",
-			"diffRoughness",
-			"specColor",
-			"specRoughness",
-			"fresnel_IOR",
-			"reflColor",
-			"reflRoughness",
-			"reflSamples",
-			"reflMetal",
-			//"colorSpace",
-			//"energyConserve",
-			"maxdist",
-			"_transm",
-			"refr_ior",
-			"DoGI",
-			"Kind",
-			"Kr",
-			"Ks",
-			"DoAO",
-			"AOsamples",
-			"AODist",
-			"diffTex",
-			"_reflMap",
-			"specColorTex",
-			"specRoughTex",
-			"specExpoTex",
-			"reflColorTex",
-			"reflRoughTex",
-			"reflIntTex",
-			"DoPho",
-			//"Tin",
-
+			"color ia_diffuse_color",
+			"float ia_diffuse_roughness",
+			"float ia_reflect_ior",
+			"color ia_reflect_color",
+			"float ia_reflect_roughness",
+			"color ia_transparency",
+			"float ia_coating_on",
+			"color ia_coating_color",
+			"float ia_coating_roughness",
+			"float ia_coating_ior",
+			"float ia_coating_samples",
+			"color ia_coating_transmittance",
+			"float ia_coating_thickness",
+			"color ia_refract_color",
+			"float ia_refract_ior",
+			"float ia_refract_roughness",
+			"color ia_refract_fog_color",
+			"float ia_refract_fog_strength",
+			"float ia_reflect_anisotropy",
+			"color ia_reflect_anisotropy_direction",
+			"float ia_reflect_samples",
+			"float ia_reflect_has_reflection",
+			"float ia_reflect_has_specular",
+			"float ia_reflect_has_environment",
+			"float ia_coating_has_reflection",
+			"float ia_coating_has_specular",
+			"float ia_coating_has_environment",
+			"color ia_incandescence",
+			"float ia_refract_samples",
+			"float ia_sss_on",
+			"color ia_sss_scattering",
+			"float ia_sss_scattering_scale",
+			"float ia_sss_ior",
+			"float ia_sss_scale",
+			"uniform string ia_envmap",
+			"uniform string diffTex",
 		};
 		
 		RtPointer params[n] =
 		{
 			diffColor.V,
 			&diff_roughness,
+			&fresnel_ior,
 			specColor.V,
 			&spec_roughness,
-			&fresnel_ior,
-			&reflColor,
-			&refl_rough,
-			&raysamples,
-			&metal,
-			//&colorspace,
-			//&nrg,
-			&max_dist,
-			transm.V,
+			&transpa,
+			&ia_coating_on,
+			ia_coating_color.V,
+			&ia_coating_roughness,
+			&ia_coating_ior,
+			&ia_coating_samples,
+			&ia_coating_transmittance,
+			&ia_coating_thickness,
+			reflColor.V,
 			&refr_ior,
-			&DoPho,
-			&GI_Val,
-			&Kr,
-			&Ks,
-			&DoAO,
-			&occ_samples,
-			&occ_dist,
-			(void *) &filename,
-			(void *) &txPathFile,
-			(void *) &spec_color_tex,
-			(void *) &spec_rough_tex,
-			(void *) &spec_expo_tex,
-			(void *) &refl_color_tex,
-			(void *) &refl_rough_tex,
-			(void *) &refl_int_tex,
-			&DoPho,
-			//&Tin,
+			&refl_rough,
+			ia_refract_fog_color.V,
+			&ia_refract_fog_strength,
+			&ia_SpecularAniso,
+			&ia_ReflAniso,
+			&ia_SpecSamples,
+			&ia_SpecularRefl,
+			&ia_SpecularSpec,
+			&ia_SpecularEnv,
+			&ia_CoatingRefl,
+			&ia_CoatingSpec,
+			&ia_CoatingEnv,
+			ia_incandescence.V,
+			&ia_RefraSamples,
+			&ia_SSS_on,
+			ia_SSS_Color.V,
+			&ia_SSSStrength,
+			&ia_SSSIOR,
+			&ia_SSSScale,
+			&txPathFile,
+			&filename,
 		};
 		const char *bump_tex = "";
 		float bump_int = mtl->BumpStrength;
@@ -5189,12 +5243,12 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			bump_tex = bump_file;
 			
 			const int bn = 2;
-			RtToken btokens[n] =
+			RtToken btokens[bn] =
 			{
-				"texturename",
-				"Km",
+				"string texturename",
+				"float Km",
 			};
-			RtPointer bparams[n] =
+			RtPointer bparams[bn] =
 			{
 				(void *) &bump_tex,
 				&bump_int,
@@ -5202,12 +5256,12 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			const int bnn = 1;
 			float maxbound = mtl->BumpBound;
 			
-			RtToken bntokens[n] =
+			RtToken bntokens[bnn] =
 			{
 				"sphere",
 				//"space",
 			};
-			RtPointer bnparams[n] =
+			RtPointer bnparams[bnn] =
 			{
 				&maxbound,
 				//"object",
@@ -5227,9 +5281,9 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			rm->RiDisplacement("",RI_NULL);
 		}
 
-		rm->RiColor(Cs.V);
-		rm->RiOpacity(Os.V);
-		rm->RiSurfaceV("RoEShader", n , tokens, params );
+		//rm->RiColor(Cs.V);
+		//rm->RiOpacity(Os.V);
+		rm->RiSurfaceV("RoEShader3", n , tokens, params );
 	}
 	else if ((mtl->IsSupported)&&(mtl->shader_type==4))
 	{
@@ -5254,17 +5308,17 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		
 		RtToken tokens[n] =
 		{
-			"Kd",
-			"Ks",
-			"Ka",
-			"roughness",
-			"specularcolor",
-			"occ_samples",
-			"maxdist",
+			"float Kd",
+			"float Ks",
+			"float Ka",
+			"float roughness",
+			"color specularcolor",
+			"float occ_samples",
+			"float maxdist",
 			//"samples",
 			//"envname",
-			"DoAO",
-			"diff_mapname",	
+			"float DoAO",
+			"string diff_mapname",	
 		};
 		
 		RtPointer params[n] =
@@ -5312,18 +5366,18 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		
 		RtToken tokens[n] =
 		{
-			"Kd",
-			"Ks",
-			"Ka",
-			"uroughness",
-			"vroughness",
-			"specularcolor",
-			"occ_samples",
-			"maxdist",
+			"float Kd",
+			"float Ks",
+			"float Ka",
+			"float uroughness",
+			"float vroughness",
+			"color specularcolor",
+			"float occ_samples",
+			"float maxdist",
 			//"samples",
 			//"envname",
-			"DoAO",
-			"diff_mapname",	
+			"float DoAO",
+			"string diff_mapname",	
 		};
 		
 		RtPointer params[n] =

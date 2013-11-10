@@ -33,7 +33,7 @@
 #include "3D_MaterialConstant.h"
 
 
-static const FuID LongID_MtlCook = COMPANY_ID "MtlCookTorrance";			// All of the classes associated with MtlBlinn will add this REGID_MaterialLongID tag to their registry lists.
+static const FuID LongID_MtlCook = COMPANY_ID "advMat";			// All of the classes associated with MtlBlinn will add this REGID_MaterialLongID tag to their registry lists.
 
 
 //
@@ -42,7 +42,7 @@ static const FuID LongID_MtlCook = COMPANY_ID "MtlCookTorrance";			// All of the
 //
 //
 FuRegisterClass(COMPANY_ID_DOT + CLSID_MtlCookData, CT_MtlData3D)
-	REGS_Name,					COMPANY_ID_SPACE "CookTorrance",
+	REGS_Name,					COMPANY_ID_SPACE "AdvancedMaterial",
 	REGID_MaterialLongID,	LongID_MtlCook,
 	TAG_DONE);
 
@@ -684,7 +684,7 @@ void MtlBlinn2SW3D::Transmit(ShadeContext3D &sc)
 #define ThisClass MtlCookInputs3D 
 
 FuRegisterClass(COMPANY_ID_DOT + CLSID_MtlCookInputs, CT_MtlInputs3D)
-	REGS_Name,					COMPANY_ID "Cook Material Inputs",
+	REGS_Name,					COMPANY_ID "Adv Material Inputs",
 	REGID_MaterialLongID,	LongID_MtlCook,
 	TAG_DONE);
 
@@ -771,6 +771,8 @@ void MtlCookInputs3D::ShowInputs(bool visible)
 
 void MtlCookInputs3D::AddAllCookInputs()
 {
+	AddCoatingInputs();
+
 	AddDiffuseCookInputs();
 
 	BeginSpecularCookNest();
@@ -779,9 +781,9 @@ void MtlCookInputs3D::AddAllCookInputs()
 
 	AddReflCookInputs();
 
-	AddBumpmapCookInputs();
+	AddSSSCookInputs();
 
-	AddRefractionCookInputs();
+	AddBumpmapCookInputs();
 
 	AddGICookInputs();
 
@@ -790,9 +792,187 @@ void MtlCookInputs3D::AddAllCookInputs()
 	AddLightingShadowsCookInputs();
 }
 
+void MtlCookInputs3D::AddCoatingInputs()
+{
+	InCoatingLayerNest = BeginGroup("CoatingLayer", "CoatingLayer",true,true);
+	//InCoatingNest = BeginGroup("CoatingColor", "CoatingColor", true, true);
+		InCoatingOn = AddInput("Coating On", "coating_on", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".coating_on"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("coating_on"),
+			INP_Default,				1.0,
+			TAG_DONE);
+
+		InCoatingColorNest = BeginGroup("Color", "Color", true, false);
+
+			InCoatingR = AddInput("Red", "Red",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..CoatingRed"),
+				I3D_AutoFlags,				PF_AutoProcess,	
+				I3D_ParamName,				FuID("Coating.R"),
+				IC_ControlGroup,			1,
+				IC_ControlID,				0,
+				ICS_Name,					"Coating Color",
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				1.0,
+				INP_SubType,				IST_ColorR,
+				TAG_DONE);
+
+			InCoatingG = AddInput("Green", "Green",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..CoatingGreen"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				I3D_ParamName,				FuID("Coating.G"),
+				IC_ControlGroup,			1,
+				IC_ControlID,				1,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				1.0,
+				INP_SubType,				IST_ColorG,
+				TAG_DONE);
+
+			InCoatingB = AddInput("Blue", "Blue",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..CoatingBlue"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				I3D_ParamName,				FuID("Coating.B"),
+				IC_ControlGroup,			1,
+				IC_ControlID,				2,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				1.0,
+				INP_SubType,				IST_ColorB,
+				TAG_DONE);
+
+		EndGroup();
+
+		InCoatingThick = AddInput("Thickness", "Thickness", 
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".coatThickness"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				0.0,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			TAG_DONE);
+
+		InCoatingRough = AddInput("coating roughness", "coatingroughness", 
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID(".CoatingRoughness"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			INP_Default,				0,
+			INP_MinAllowed,			0.0,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			TAG_DONE);
+
+		InCoatIOR = AddInput("Coating IOR", "coat_IOR",
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		SLIDERCONTROL_ID,
+			LINKID_LegacyID,			FuID("..coatIOR"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("CoatIOR"),
+			INP_MinScale,				0.0,
+			INP_MaxScale,				5.0,
+			INP_Default,				1.3,
+			TAG_DONE);
+		
+		InCoatSamples = AddInput("CoatSamples", "coat_samples",
+			LINKID_DataType,		CLSID_DataType_Number,
+			INPID_InputControl,	SLIDERCONTROL_ID,
+			INP_Integer,			TRUE,
+			INP_MinAllowed,			1.0,
+			INP_MinScale,			1.0,
+			INP_MaxScale,			256.0,
+			INP_Default,			8.0,
+			TAG_DONE);
+
+		InCoatTransNest = BeginGroup("Coating tranmittance Color", "CoatTransColor", true, false);
+
+			InCoatTransR = AddInput("Coat Transm Red", "CoatTransRed",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..CoatTransRed"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				ICS_Name,					"Coat Transmittance",
+				IC_ControlGroup,			1,
+				IC_ControlID,				0,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				1.0,
+				INP_SubType,				IST_ColorR,
+				TAG_DONE);
+
+			InCoatTransG = AddInput("Coat Transm Green", "CoatTransGreen",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..CoatTransGreen"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				IC_ControlGroup,			1,
+				IC_ControlID,				1,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				1.0,
+				INP_SubType,				IST_ColorG,
+				TAG_DONE);
+
+			InCoatTransB = AddInput("Coat Transm Blue", "CoatTransBlue",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..CoatTransBlue"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				IC_ControlGroup,			1,
+				IC_ControlID,				2,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				1.0,
+				INP_SubType,				IST_ColorB,
+				TAG_DONE);
+			EndGroup();
+
+		InCoatingRefl = AddInput("has reflection", "coating_refl", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".coating_refl"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("coating_refl"),
+			INP_Default,				1.0,
+			TAG_DONE);
+
+		InCoatingSpec = AddInput("has specualar", "coating_spec", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".coating_spec"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("coating_spec"),
+			INP_Default,				1.0,
+			TAG_DONE);
+
+		InCoatingEnv = AddInput("has enviroment", "coating_env", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".coating_env"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("coating_env"),
+			INP_Default,				1.0,
+			TAG_DONE);
+	
+		
+	//EndGroup();
+	EndGroup();
+}
 void MtlCookInputs3D::AddDiffuseCookInputs()
 {
-	InDiffuseNest = BeginGroup("Diffuse", "Diffuse", true, true);
+	InBaseLayerNest = BeginGroup("BaseLayer", "BaseLayer",true,true);
+	InDiffuseNest = BeginGroup("Diffuse", "Diffuse", true, false);
 
 		InDiffuseColorNest = BeginGroup("Color", "Color", true, false);
 
@@ -884,30 +1064,75 @@ void MtlCookInputs3D::AddDiffuseCookInputs()
 			INP_Default,				.1,
 			INP_MinAllowed,			0.0,
 			INP_MinScale,				0.0,
-			INP_MaxScale,				5.0,
+			INP_MaxScale,				1.0,
 			TAG_DONE);
+
+		InIncanColorNest = BeginGroup("IncandescenceColor", "IncandescenceColor", true, false);
+
+			InIncaR = AddInput("IncaRed", "IncaRed",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..IncaRed"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				ICS_Name,					"Incandescence Color",
+				IC_ControlGroup,			1,
+				IC_ControlID,				0,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				0,
+				INP_SubType,				IST_ColorR,
+				TAG_DONE);
+
+			InIncaG = AddInput("IncaGreen", "IncaGreen",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..IncaGreen"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				IC_ControlGroup,			1,
+				IC_ControlID,				1,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				0,
+				INP_SubType,				IST_ColorG,
+				TAG_DONE);
+
+			InIncaB = AddInput("IncaBlue", "IncaBlue",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		COLORCONTROL_ID,
+				LINKID_LegacyID,			FuID("..IncaBlue"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				IC_ControlGroup,			1,
+				IC_ControlID,				2,
+				INP_MinScale,				0.0,
+				INP_MaxScale,				1.0,
+				INP_Default,				0,
+				INP_SubType,				IST_ColorB,
+				TAG_DONE);
+			EndGroup();
 		
+	EndGroup();
 	EndGroup();
 }
 
+
 void MtlCookInputs3D::BeginSpecularCookNest()
 {
-	InSpecularNest = BeginGroup("Specular", "Specular");
+	InSpecularNest = BeginGroup("Reflection", "Reflection");
 }
 
 void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 {
 	InSpecularColorNest = BeginGroup("Color", "Color", true, false);
 
-		InSpecularR = AddInput("Specular Red", "Red",
+		InSpecularR = AddInput("Refl Red", "Red",
 			LINKID_DataType,			CLSID_DataType_Number, 
 			INPID_InputControl,		COLORCONTROL_ID,
-			LINKID_LegacyID,			FuID("..SpecularRed"),
+			LINKID_LegacyID,			FuID("..ReflRed"),
 			I3D_AutoFlags,				PF_AutoProcess,
-			I3D_ParamName,				FuID("Specular.R"),
+			I3D_ParamName,				FuID("Refl.R"),
 			IC_ControlGroup,			2,
 			IC_ControlID,				0,
-			ICS_Name,					"Specular Color",
+			ICS_Name,					"Reflect Color",
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
 			INP_Default,				DefaultSpecularColor.R,
@@ -917,9 +1142,9 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 		InSpecularG = AddInput("Green", "Green", 
 			LINKID_DataType,			CLSID_DataType_Number,
 			INPID_InputControl,		COLORCONTROL_ID,
-			LINKID_LegacyID,			FuID("..SpecularGreen"),
+			LINKID_LegacyID,			FuID("..ReflGreen"),
 			I3D_AutoFlags,				PF_AutoProcess,
-			I3D_ParamName,				FuID("Specular.G"),
+			I3D_ParamName,				FuID("Refl.G"),
 			IC_ControlGroup,			2,
 			IC_ControlID,				1,
 			INP_MinScale,				0.0,
@@ -932,8 +1157,8 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 			LINKID_DataType,			CLSID_DataType_Number,
 			INPID_InputControl,		COLORCONTROL_ID,
 			I3D_AutoFlags,				PF_AutoProcess,
-			LINKID_LegacyID,			FuID("..SpecularBlue"),
-			I3D_ParamName,				FuID("Specular.B"),
+			LINKID_LegacyID,			FuID("..ReflBlue"),
+			I3D_ParamName,				FuID("Refl.B"),
 			IC_ControlGroup,			2,
 			IC_ControlID,				2,
 			INP_MinScale,				0.0,
@@ -942,10 +1167,10 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 			INP_SubType,				IST_ColorB,
 			TAG_DONE);
 
-		InSpecularColorMtl = AddInput("Specular Color Material", "Material",
+		InSpecularColorMtl = AddInput("Refl Color Material", "Material",
 			LINKID_DataType,			CLSID_DataType_MtlGraph3D,
 			LINKID_AllowedDataType,	CLSID_DataType_Image,
-			LINKID_LegacyID,			FuID("..SpecularColorTex"),
+			LINKID_LegacyID,			FuID("..ReflColorTex"),
 			I3D_AutoFlags,				PF_AutoProcess,
 			I3D_ParamName,				FuID("SpecularMtl"),
 			I3D_ChildSlot,				MtlCookData3D::CMS_Specular,
@@ -965,7 +1190,7 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 		INP_MinScale,				0.0,
 		INP_MaxScale,				1.0,
 		INP_Default,				1.0,
-		IC_Visible,					TRUE,
+		IC_Visible,					FALSE,
 		TAG_DONE);
 
 	InSpecularIntensityMtl = AddInput("Specular Intensity Material", "Intensity.Material",
@@ -1007,29 +1232,124 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 			INP_Required,				FALSE,
 			TAG_DONE);
 	}
-	InSpecularIOR = AddInput("Specular (and Reflection) IOR ", "spec_IOR", 
+	InSpecularIOR = AddInput("Reflection IOR ", "refl_IOR", 
 		LINKID_DataType,			CLSID_DataType_Number,
 		INPID_InputControl,		SLIDERCONTROL_ID,
-		LINKID_LegacyID,			FuID(".spec_IOR"),
+		LINKID_LegacyID,			FuID(".refl_IOR"),
 		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("spec_IOR"),
+		I3D_ParamName,				FuID("refl_IOR"),
 		INP_MinAllowed,			0.0,
 		INP_MinScale,				0.0,
 		INP_MaxScale,				5.0,
-		INP_Default,				.8,
+		INP_Default,				1.45,
 		TAG_DONE);
 
-	InSpecularRoughness = AddInput("Specular roughness", "spec_rough", 
+	InSpecularRoughness = AddInput("Refl roughness", "refl_rough", 
 		LINKID_DataType,			CLSID_DataType_Number,
 		INPID_InputControl,		SLIDERCONTROL_ID,
-		LINKID_LegacyID,			FuID(".spec_rough"),
+		LINKID_LegacyID,			FuID(".refl_rough"),
 		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("spec_rough"),
+		I3D_ParamName,				FuID("refl_rough"),
 		INP_MinAllowed,			0.0,
 		INP_MinScale,				0.0,
-		INP_MaxScale,				5.0,
+		INP_MaxScale,				1.0,
 		INP_Default,				0.1,
 		TAG_DONE);
+
+	InSpecularRefl = AddInput("reflect geo", "sepc_refl", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".sepc_refl"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("sepc_refl"),
+			INP_Default,				1.0,
+			TAG_DONE);
+
+	InSpecularSpec = AddInput("reflect lights", "sepc_spec", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".sepc_spec"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("sepc_spec"),
+			INP_Default,				1.0,
+			TAG_DONE);
+
+	InSpecularEnv = AddInput("reflect enviroment", "sepc_env", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".sepc_env"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("sepc_env"),
+			INP_Default,				1.0,
+			TAG_DONE);
+
+	InSpecSamples = AddInput("Reflection Samples", "ReflSamples",
+			LINKID_DataType,		CLSID_DataType_Number,
+			INPID_InputControl,	SLIDERCONTROL_ID,
+			INP_Integer,			TRUE,
+			INP_MinAllowed,		1.0,
+			INP_MinScale,			1.0,
+			INP_MaxScale,			128.0,
+			INP_Default,			8.0,
+			TAG_DONE);
+
+	InSpecularAniso = AddInput("anisotropic", "sepc_aniso", 
+		LINKID_DataType,			CLSID_DataType_Number,
+		INPID_InputControl,		SLIDERCONTROL_ID,
+		LINKID_LegacyID,			FuID(".refl_aniso"),
+		I3D_AutoFlags,				PF_AutoProcess,
+		I3D_ParamName,				FuID("refl_aniso"),
+		INP_MinScale,				-1.0,
+		INP_MaxScale,				1.0,
+		INP_Default,				0.0,
+		TAG_DONE);
+	
+	InSpecularAnisoColorNest = BeginGroup("AnisoDirection", "AnisoDirection", true, false);
+
+		InSpecularAnisoR = AddInput("Aniso Red", "AnisoRed",
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		COLORCONTROL_ID,
+			LINKID_LegacyID,			FuID("..ReflAnisoRed"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("ReflAniso.R"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				0,
+			ICS_Name,					"ReflectAnisoDirection",
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0.5,
+			INP_SubType,				IST_ColorR,
+			TAG_DONE);
+
+		InSpecularAnisoG = AddInput("Aniso Green", "AnisoGreen", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		COLORCONTROL_ID,
+			LINKID_LegacyID,			FuID("..ReflAnisoGreen"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("ReflAniso.G"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				1,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				1.0,
+			INP_SubType,				IST_ColorG,
+			TAG_DONE);
+
+		InSpecularAnisoB = AddInput("Aniso Blue", "AnisoBlue", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		COLORCONTROL_ID,
+			I3D_AutoFlags,				PF_AutoProcess,
+			LINKID_LegacyID,			FuID("..ReflAnisoBlue"),
+			I3D_ParamName,				FuID("ReflAniso.B"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				2,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0.5,
+			INP_SubType,				IST_ColorB,
+			TAG_DONE);
+
+	EndGroup();
 }
 
 void MtlCookInputs3D::EndSpecularCookNest()
@@ -1039,36 +1359,36 @@ void MtlCookInputs3D::EndSpecularCookNest()
 
 void MtlCookInputs3D::AddReflCookInputs()
 {
-	InReflNest = BeginGroup("Reflection", "Reflection");
+	InReflNest = BeginGroup("Refraction", "Refraction");
 
-	  InReflColorNest = BeginGroup("Color", "Color", true, false);
+	  InReflColorNest = BeginGroup("Refraction Color", "Color", true, false);
 
-		InReflR = AddInput("Reflection Red", "Red",
+		InReflR = AddInput("Refraction Red", "Red",
 			LINKID_DataType,			CLSID_DataType_Number, 
 			INPID_InputControl,		COLORCONTROL_ID,
-			LINKID_LegacyID,			FuID("..ReflectionRed"),
+			LINKID_LegacyID,			FuID("..RefractionRed"),
 			I3D_AutoFlags,				PF_AutoProcess,
-			I3D_ParamName,				FuID("Reflection.R"),
+			I3D_ParamName,				FuID("Refraction.R"),
 			IC_ControlGroup,			2,
 			IC_ControlID,				0,
-			ICS_Name,					"Refelection Color",
+			ICS_Name,					"Refraction Color",
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
-			INP_Default,				DefaultSpecularColor.R,
+			INP_Default,				0,
 			INP_SubType,				IST_ColorR,
 			TAG_DONE);
 
 		InReflG = AddInput("Green", "Green", 
 			LINKID_DataType,			CLSID_DataType_Number,
 			INPID_InputControl,		COLORCONTROL_ID,
-			LINKID_LegacyID,			FuID("..ReflectionGreen"),
+			LINKID_LegacyID,			FuID("..RefractionGreen"),
 			I3D_AutoFlags,				PF_AutoProcess,
-			I3D_ParamName,				FuID("Reflection.G"),
+			I3D_ParamName,				FuID("Refraction.G"),
 			IC_ControlGroup,			2,
 			IC_ControlID,				1,
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
-			INP_Default,				DefaultSpecularColor.G,
+			INP_Default,				0,
 			INP_SubType,				IST_ColorG,
 			TAG_DONE);
 
@@ -1076,20 +1396,20 @@ void MtlCookInputs3D::AddReflCookInputs()
 			LINKID_DataType,			CLSID_DataType_Number,
 			INPID_InputControl,		COLORCONTROL_ID,
 			I3D_AutoFlags,				PF_AutoProcess,
-			LINKID_LegacyID,			FuID("..ReflectionBlue"),
-			I3D_ParamName,				FuID("Reflection.B"),
+			LINKID_LegacyID,			FuID("..RefractionBlue"),
+			I3D_ParamName,				FuID("Refraction.B"),
 			IC_ControlGroup,			2,
 			IC_ControlID,				2,
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
-			INP_Default,				DefaultSpecularColor.B,
+			INP_Default,				0,
 			INP_SubType,				IST_ColorB,
 			TAG_DONE);
 
-		InReflColorMtl = AddInput("Reflection Color Material", "Material",
+		InReflColorMtl = AddInput("Refraction Color Material", "Material",
 			LINKID_DataType,			CLSID_DataType_Image,//CLSID_DataType_MtlGraph3D,
 			//LINKID_AllowedDataType,	CLSID_DataType_Image,
-			LINKID_LegacyID,			FuID("..ReflectionColorTex"),
+			LINKID_LegacyID,			FuID("..RefractionColorTex"),
 			I3D_AutoFlags,				PF_AutoProcess,
 			I3D_ParamName,				FuID("SpecularMtl"),
 			I3D_ChildSlot,				MtlCookData3D::CMS_Specular,
@@ -1099,77 +1419,205 @@ void MtlCookInputs3D::AddReflCookInputs()
 
 	EndGroup();
 
-	InReflIntensity = AddInput("Reflection Intensity", "Intensity", 
+	InReflRoughness = AddInput("Refraction roughness", "refra_rough", 
 		LINKID_DataType,			CLSID_DataType_Number,
 		INPID_InputControl,		SLIDERCONTROL_ID,
-		LINKID_LegacyID,			FuID(".ReflectionIntensity"),
+		LINKID_LegacyID,			FuID(".refra_rough"),
 		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("ReflectionIntensity"),
+		I3D_ParamName,				FuID("refra_rough"),
 		INP_MinAllowed,			0.0,
 		INP_MinScale,				0.0,
 		INP_MaxScale,				1.0,
-		INP_Default,				1.0,
-		IC_Visible,					TRUE,
-		TAG_DONE);
-
-	InReflIntMtl = AddInput("Reflection Intensity Material", "Material",
-		LINKID_DataType,			CLSID_DataType_Image,//CLSID_DataType_MtlGraph3D,
-		//LINKID_AllowedDataType,	CLSID_DataType_Image,
-		LINKID_LegacyID,			FuID("..ReflectionIntTex"),
-		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("SpecularMtl"),
-		I3D_ChildSlot,				MtlCookData3D::CMS_Specular,
-		LINK_Main,					MMID_SpecularColor,
-		INP_Required,				FALSE, 
-		TAG_DONE);
-
-	InReflRoughness = AddInput("Reflection roughness", "refl_rough", 
-		LINKID_DataType,			CLSID_DataType_Number,
-		INPID_InputControl,		SLIDERCONTROL_ID,
-		LINKID_LegacyID,			FuID(".refl_rough"),
-		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("refl_rough"),
-		INP_MinAllowed,			0.0,
-		INP_MinScale,				0.0,
-		INP_MaxScale,				5.0,
 		INP_Default,				0.1,
 		TAG_DONE);
 
-	InReflRoughMtl = AddInput("Reflection Rough Material", "ReflRoughMaterial",
+	InReflRoughMtl = AddInput("Refraction Rough Material", "RefraRoughMaterial",
 			LINKID_DataType,			CLSID_DataType_MtlGraph3D,
 			LINKID_AllowedDataType,	CLSID_DataType_Image,
-			LINKID_LegacyID,			FuID(".ReflRoughTex"),
+			LINKID_LegacyID,			FuID(".RefraRoughTex"),
 			I3D_AutoFlags,				PF_AutoProcess,
-			I3D_ParamName,				FuID("ReflRoughMtl"),
+			I3D_ParamName,				FuID("RefraRoughMtl"),
 			I3D_ChildSlot,				MtlCookData3D::CMS_SpecularExponent,
 			LINK_Main,					MMID_SpecularExponent,
 			INP_Required,				FALSE,
 			TAG_DONE);
 
-	InReflDist = AddInput("max distance", "maxdist", 
+	InRefrIOR = AddInput("Refraction IOR", "refra_IOR",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		SLIDERCONTROL_ID,
+				LINKID_LegacyID,			FuID("..RefrIOR"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				I3D_ParamName,				FuID("RefrIOR"),
+				INP_MinScale,				0.0,
+				INP_MaxScale,				5.0,
+				INP_Default,				1.3,
+				TAG_DONE);
+
+	InRefraSamples = AddInput("Refraction Samples", "RefraSamples",
+			LINKID_DataType,		CLSID_DataType_Number,
+			INPID_InputControl,	SLIDERCONTROL_ID,
+			INP_Integer,			TRUE,
+			INP_MinAllowed,		1.0,
+			INP_MinScale,			1.0,
+			INP_MaxScale,			128.0,
+			INP_Default,			4.0,
+			TAG_DONE);
+
+	InFogStrength = AddInput("Refraction Fog Strength", "fog_strength", 
 		LINKID_DataType,			CLSID_DataType_Number,
 		INPID_InputControl,		SLIDERCONTROL_ID,
-		LINKID_LegacyID,			FuID(".maxdist"),
+		LINKID_LegacyID,			FuID(".fog_strength"),
 		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("maxdist"),
+		I3D_ParamName,				FuID("fog_strength"),
 		INP_MinAllowed,			0.0,
 		INP_MinScale,				0.0,
-		INP_MaxScale,				100.0,
-		INP_Default,				20.0,
-		TAG_DONE);
-	
-	InReflMetal = AddInput("is metal", "is_metal", 
-		LINKID_DataType,			CLSID_DataType_Number,
-		INPID_InputControl,		CHECKBOXCONTROL_ID,
-		LINKID_LegacyID,			FuID(".is_metal"),
-		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("is_metal"),
+		INP_MaxScale,				1.0,
 		INP_Default,				0.0,
 		TAG_DONE);
+
+	InReflFogColorNest = BeginGroup("Refraction Fog Color", "FogColor", true, false);
+
+		InReflFogR = AddInput("Refraction Fog Red", "FogRed",
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		COLORCONTROL_ID,
+			LINKID_LegacyID,			FuID("..RefractionFogRed"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("RefractionFog.R"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				0,
+			ICS_Name,					"Refraction Fog Color",
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0,
+			INP_SubType,				IST_ColorR,
+			TAG_DONE);
+
+		InReflFogG = AddInput("Refraction Fog Green", "FogGreen", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		COLORCONTROL_ID,
+			LINKID_LegacyID,			FuID("..RefractionFogGreen"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("RefractionFog.G"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				1,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0,
+			INP_SubType,				IST_ColorG,
+			TAG_DONE);
+
+		InReflFogB = AddInput("Refraction Fog Blue", "FogBlue", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		COLORCONTROL_ID,
+			I3D_AutoFlags,				PF_AutoProcess,
+			LINKID_LegacyID,			FuID("..RefractionFogBlue"),
+			I3D_ParamName,				FuID("RefractionFog.B"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				2,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0,
+			INP_SubType,				IST_ColorB,
+			TAG_DONE);
+	EndGroup();
 	
  EndGroup();
 
 }
+void MtlCookInputs3D::AddSSSCookInputs()
+{
+	InSSSNest = BeginGroup("SubSurfaceScattering", "SSS");
+
+	InSSSOn = AddInput("SSS On", "SSS_on", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		CHECKBOXCONTROL_ID,
+			LINKID_LegacyID,			FuID(".SSS_on"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("SSS_on"),
+			INP_Default,				0.0,
+			TAG_DONE);
+
+	  InSSSColorNest = BeginGroup("SSS Color", "SSSColor", true, false);
+
+		InSSSR = AddInput("SSS Red", "SSSRed",
+			LINKID_DataType,			CLSID_DataType_Number, 
+			INPID_InputControl,		COLORCONTROL_ID,
+			LINKID_LegacyID,			FuID("..SSSRed"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("SSS.R"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				0,
+			ICS_Name,					"Refraction Color",
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0,
+			INP_SubType,				IST_ColorR,
+			TAG_DONE);
+
+		InSSSG = AddInput("SSS Green", "SSSGreen", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		COLORCONTROL_ID,
+			LINKID_LegacyID,			FuID("..SSSGreen"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("SSS.G"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				1,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0,
+			INP_SubType,				IST_ColorG,
+			TAG_DONE);
+
+		InSSSB = AddInput("SSS Blue", "SSSBlue", 
+			LINKID_DataType,			CLSID_DataType_Number,
+			INPID_InputControl,		COLORCONTROL_ID,
+			I3D_AutoFlags,				PF_AutoProcess,
+			LINKID_LegacyID,			FuID("..SSSBlue"),
+			I3D_ParamName,				FuID("SSS.B"),
+			IC_ControlGroup,			2,
+			IC_ControlID,				2,
+			INP_MinScale,				0.0,
+			INP_MaxScale,				1.0,
+			INP_Default,				0,
+			INP_SubType,				IST_ColorB,
+			TAG_DONE);
+	EndGroup();
+
+	InSSSStrength = AddInput("SSS strength", "SSSstrength", 
+		LINKID_DataType,			CLSID_DataType_Number,
+		INPID_InputControl,		SLIDERCONTROL_ID,
+		LINKID_LegacyID,			FuID(".SSSstrength"),
+		I3D_AutoFlags,				PF_AutoProcess,
+		I3D_ParamName,				FuID("SSSstrength"),
+		INP_MinAllowed,			0.0,
+		INP_MinScale,				0.0,
+		INP_MaxScale,				1.0,
+		INP_Default,				0.0,
+		TAG_DONE);
+
+	InSSSIOR = AddInput("SSS IOR", "SSS_IOR",
+				LINKID_DataType,			CLSID_DataType_Number,
+				INPID_InputControl,		SLIDERCONTROL_ID,
+				LINKID_LegacyID,			FuID("..SSSIOR"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				I3D_ParamName,				FuID("SSSIOR"),
+				INP_MinScale,				0.0,
+				INP_MaxScale,				5.0,
+				INP_Default,				1.3,
+				TAG_DONE);
+
+	InSSSScale = AddInput("SSS Scale", "SSSScale",
+			LINKID_DataType,		CLSID_DataType_Number,
+			INPID_InputControl,	SLIDERCONTROL_ID,
+			INP_MinAllowed,		0.0,
+			INP_MinScale,			0.0,
+			INP_MaxScale,			5.0,
+			INP_Default,			1.0,
+			TAG_DONE);
+ EndGroup();
+
+}
+
 void MtlCookInputs3D::AddBumpmapCookInputs()
 {
 	InBumpNest = BeginGroup("Displacement", "Displacement");
@@ -1214,23 +1662,7 @@ void MtlCookInputs3D::AddBumpmapCookInputs()
 	EndGroup();
 }
 
-void MtlCookInputs3D::AddRefractionCookInputs()
-{
-	InRefractionNest = BeginGroup("Refraction", "Refraction");
 
-			InRefrIOR = AddInput("IOR", "IOR",
-				LINKID_DataType,			CLSID_DataType_Number,
-				INPID_InputControl,		SLIDERCONTROL_ID,
-				LINKID_LegacyID,			FuID("..RefrIOR"),
-				I3D_AutoFlags,				PF_AutoProcess,
-				I3D_ParamName,				FuID("RefrIOR"),
-				INP_MinScale,				0.0,
-				INP_MaxScale,				5.0,
-				INP_Default,				1.3,
-				TAG_DONE);
-
-	EndGroup();
-}
 void MtlCookInputs3D::AddGICookInputs()
 {
 	InGINest = BeginGroup("ColorBleeding", "ColorBleeding");
@@ -1278,6 +1710,7 @@ void MtlCookInputs3D::AddTransmittanceCookInputs()
 				INP_MaxAllowed,			1.0,
 				INP_Default,				0.0,
 				INP_SubType,				IST_ColorR,
+				IC_Visible,					FALSE,
 				TAG_DONE);
 
 			InTransmittanceG = AddInput("Green", "Green",
@@ -1293,6 +1726,7 @@ void MtlCookInputs3D::AddTransmittanceCookInputs()
 				INP_MaxAllowed,			1.0,
 				INP_Default,				0.0,
 				INP_SubType,				IST_ColorG,
+				IC_Visible,					FALSE,
 				TAG_DONE);
 
 			InTransmittanceB = AddInput("Blue", "Blue",
@@ -1308,6 +1742,7 @@ void MtlCookInputs3D::AddTransmittanceCookInputs()
 				INP_MaxAllowed,			1.0,
 				INP_Default,				0.0,
 				INP_SubType,				IST_ColorB,
+				IC_Visible,					FALSE,
 				TAG_DONE);
 
 			//InTransmittanceMtl.AddInput("Transmittance Material", "Material",
@@ -1332,6 +1767,7 @@ void MtlCookInputs3D::AddTransmittanceCookInputs()
 			INP_MaxScale,				1.0,
 			INP_MaxAllowed,			1.0,
 			INP_Default,				1.0,
+			IC_Visible,					FALSE,
 			TAG_DONE);
 
 		InTransmittanceColorDetail = AddInput("Color Detail", "ColorDetail",
@@ -1344,6 +1780,7 @@ void MtlCookInputs3D::AddTransmittanceCookInputs()
 			INP_MaxScale,				1.0,
 			INP_MaxAllowed,			1.0,
 			INP_Default,				0.0,
+			IC_Visible,					FALSE,
 			TAG_DONE);
 
 		InTransmittanceSaturation = AddInput("Saturation", "Saturation",
@@ -1355,6 +1792,7 @@ void MtlCookInputs3D::AddTransmittanceCookInputs()
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
 			INP_Default,				1.0,
+			IC_Visible,					FALSE,
 			TAG_DONE);
 
 	EndGroup();
@@ -1417,6 +1855,29 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 	}
 	else data->DiffuseImg = NULL;
 
+	data->Incan.R = *InIncaR->GetValue(req);
+	data->Incan.G = *InIncaG->GetValue(req);
+	data->Incan.B = *InIncaB->GetValue(req);
+	data->Incan.A = 1.0f;
+
+	//coating
+	data->CoatingColor.R = *InCoatingR->GetValue(req);
+	data->CoatingColor.G = *InCoatingG->GetValue(req);
+	data->CoatingColor.B = *InCoatingB->GetValue(req);
+	data->CoatingColor.A = 1.0f;
+	data->CoatingOn = *InCoatingOn->GetValue(req);
+	data->CoatIOR = *InCoatIOR->GetValue(req);
+	data->CoatSamples = *InCoatSamples->GetValue(req);
+	data->CoatTrans.R = *InCoatTransR->GetValue(req);
+	data->CoatTrans.G = *InCoatTransG->GetValue(req);
+	data->CoatTrans.B = *InCoatTransB->GetValue(req);
+	data->CoatTrans.A = 1.0f;
+	data->CoatingThick = *InCoatingThick->GetValue(req);
+	data->CoatingRough = *InCoatingRough->GetValue(req);
+	data->CoatingEnv = *InCoatingEnv->GetValue(req);
+	data->CoatingSpec = *InCoatingSpec->GetValue(req);
+	data->CoatingRefl = *InCoatingRefl->GetValue(req);
+
 	// specular color
 	Color4f specular;
 	data->Specular.R = *InSpecularR->GetValue(req);
@@ -1424,6 +1885,15 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 	data->Specular.B = *InSpecularB->GetValue(req);
 	data->Specular.A = 1.0f;														// this value is ignored
 	data->SetChildMtl(MtlCookData3D::CMS_Specular, InSpecularColorMtl->GetValue(req));
+	data->SpecularEnv = *InSpecularEnv->GetValue(req);
+	data->SpecularRefl = *InSpecularRefl->GetValue(req);
+	data->SpecularSpec = *InSpecularSpec->GetValue(req);
+	data->SpecSamples = *InSpecSamples->GetValue(req);
+	data->ReflAniso.R = *InSpecularAnisoR->GetValue(req);
+	data->ReflAniso.G = *InSpecularAnisoG->GetValue(req);
+	data->ReflAniso.B = *InSpecularAnisoB->GetValue(req);
+	data->ReflAniso.A = 1.0f;
+	data->SpecularAniso = *InSpecularAniso->GetValue(req);
 	
 	Image *img_spec1 = (Image *) InSpecularColorMtl->GetValue(req);
 	if (img_spec1){
@@ -1475,19 +1945,15 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 	}
 	else data->ReflRoughImg = NULL;
 
-	Image *img_refl3 = (Image *) InReflIntMtl->GetValue(req);
-	if (img_refl3){
-		data->ReflIntImg = img_refl3;
-	}
-	else data->ReflIntImg = NULL;
-
-	// refl intensity
-	data->ReflIntensity = *InReflIntensity->GetValue(req);
-	//data->SetChildMtl(MtlCookData3D::CMS_SpecularIntensity, InSpecularIntensityMtl->GetValue(req));
 	data->ReflRoughness = *InReflRoughness->GetValue(req);
-	data->ReflMaxDist = *InReflDist->GetValue(req);
-	data->ReflMetal = *InReflMetal->GetValue(req);
-	
+
+	data->FogStrength = *InFogStrength->GetValue(req);
+	data->ReflFog.R = *InReflFogR->GetValue(req);
+	data->ReflFog.G = *InReflFogG->GetValue(req);
+	data->ReflFog.B = *InReflFogB->GetValue(req);
+	data->ReflFog.A = 1.0f;
+	data->RefraSamples = *InRefraSamples->GetValue(req);
+
 	// refraction
 	data->RefrIOR = *InRefrIOR->GetValue(req);
 
@@ -1508,6 +1974,15 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 
 	data->BumpBound = *InBumpBound->GetValue(req);
 	data->BumpStrength = *InBumpStrength->GetValue(req);
+
+	data->SSS_color.R = *InSSSR->GetValue(req);
+	data->SSS_color.G = *InSSSG->GetValue(req);
+	data->SSS_color.B = *InSSSB->GetValue(req);
+	data->SSS_color.A = 1.0f;
+	data->SSS_on = *InSSSOn->GetValue(req);
+	data->SSSIOR = *InSSSIOR->GetValue(req);
+	data->SSSStrength = *InSSSStrength->GetValue(req);
+	data->SSSScale = *InSSSScale->GetValue(req);
 
 
 	// transmittance
@@ -1554,13 +2029,13 @@ Data3D *MtlCookInputs3D::ProcessTagList(Request *req, Data3D *data, TagList &tag
 #define BaseClass MtlOperator3D 
 #define ThisClass MtlCook3D 
 
-FuRegisterClass(COMPANY_ID ".CookTor", CT_Material3D)
-	REGS_Name,					COMPANY_ID_SPACE "CookTorrance",
-	REGS_OpIconString,		"3CT",
+FuRegisterClass(COMPANY_ID ".AdvMat", CT_Material3D)
+	REGS_Name,					COMPANY_ID_SPACE "AdvMaterial",
+	REGS_OpIconString,		"3AM",
 	REGS_Category,				COMPANY_ID_DBS "3D\\Material",
-	REGS_OpDescription,		"CookTorrance Material",
+	REGS_OpDescription,		"Advanced Material",
 	REGS_HelpTopic,			"Tools/3D/Material/Phong",
-	REGS_AboutDescription,	"Generate a CookTorrance material",
+	REGS_AboutDescription,	"Generate a Uber material",
 	REGID_MaterialLongID,	LongID_MtlCook,
 	REG_ToolbarDefault,		FALSE,
 	REG_OpNoMask,				TRUE,

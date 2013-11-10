@@ -37,6 +37,8 @@ public:
 	Color4f Diffuse;
 	Image *DiffuseImg;
 
+	Color4f Incan;
+
 	Color4f Specular;	
 	Image *SpecColorImg;
 	Image *SpecRoughImg;
@@ -47,6 +49,13 @@ public:
 	float32 SpecularExponent;
 	float32 specRoughness;
 	float32 specIOR;
+	float32 SpecularEnv;
+	float32 SpecularRefl;
+	float32 SpecularSpec;
+	float32 SpecSamples;
+	Color4f ReflAniso;
+	float32 SpecularAniso;
+
 
 	Color4f Refl;
 	Image *ReflColorImg;
@@ -58,9 +67,23 @@ public:
 	float32 ReflMetal;
 	float32 Refl_val;
 	float32 Refl_env_int;
+
+	Color4f CoatingColor;
+	float32 CoatingOn;
+	float32 CoatIOR;
+	float32 CoatSamples;
+	Color4f CoatTrans;
+	float32 CoatingThick;
+	float32 CoatingRough;
+	float32 CoatingEnv;
+	float32 CoatingSpec;
+	float32 CoatingRefl;
 	
 	float32 RefrIOR;
 	float32 RefrInt;
+	float32 FogStrength;
+	Color4f ReflFog;
+	float32 RefraSamples;
 
 	double DoGI;
 	float32 GIStrength;
@@ -73,6 +96,12 @@ public:
 	Image *BumpImg;
 	float32 BumpBound;
 	float32 BumpStrength;
+
+	float32 SSS_on;
+	Color4f SSS_color;
+	float32 SSSIOR;
+	float32 SSSStrength;
+	float32 SSSScale;
 
 	MtlData3D *DiffuseMtl;
 	MtlData3D *SpecularMtl;
@@ -218,6 +247,7 @@ class MtlCookInputs3D: public MtlInputs3D
 
 public:
 	Input *InDiffuseNest;
+	Input *InBaseLayerNest;
 	Input *InDiffuseColorNest;
 	Input *InDiffuseR;
 	Input *InDiffuseG;
@@ -226,6 +256,30 @@ public:
 	Input *InOpacity;
 	Input *InRough;
 	Input *InDiffuseMtl;
+	Input *InIncaB;
+	Input *InIncaG;
+	Input *InIncaR;
+	Input *InIncanColorNest;
+
+	Input *InCoatingNest;
+	Input *InCoatingLayerNest;
+	Input *InCoatingColorNest;
+	Input *InCoatingR;
+	Input *InCoatingG;
+	Input *InCoatingB;
+	Input *InCoatingOn;
+	Input *InCoatIOR;
+	Input *InCoatSamples;
+	Input *InCoatTransNest;
+	Input *InCoatTransR;
+	Input *InCoatTransG;
+	Input *InCoatTransB;
+	Input *InCoatingThick;
+	Input *InCoatingRough;
+	Input *InCoatingEnv;
+	Input *InCoatingSpec;
+	Input *InCoatingRefl;
+
 
 	Input *InSpecularNest;
 	Input *InSpecularColorNest;
@@ -239,6 +293,15 @@ public:
 	Input *InSpecularColorMtl;
 	Input *InSpecularIntensityMtl;
 	Input *InSpecularExponentMtl;
+	Input *InSpecularEnv;
+	Input *InSpecularRefl;
+	Input *InSpecularSpec;
+	Input *InSpecSamples;
+	Input *InSpecularAnisoColorNest;
+	Input *InSpecularAnisoR;
+	Input *InSpecularAnisoG;
+	Input *InSpecularAnisoB;
+	Input *InSpecularAniso;
 
 	Input *InReflNest;
 	Input *InReflColorNest;
@@ -253,6 +316,12 @@ public:
 	Input *InReflStrength;
 	Input *InReflRoughMtl;
 	Input *InReflIntMtl;
+	Input *InFogStrength;
+	Input *InReflFogColorNest;
+	Input *InReflFogR;
+	Input *InReflFogG;
+	Input *InReflFogB;
+	Input *InRefraSamples;
 
 	Input *InGIStrength;
 	Input *InDoGI;
@@ -272,6 +341,16 @@ public:
 	Input *InShowTransmittanceMtlInput;
 	//Input *InTransmittanceMtl;
 
+	Input *InSSSNest;
+	Input *InSSSColorNest;
+	Input *InSSSR;
+	Input *InSSSG;
+	Input *InSSSB;
+	Input *InSSSOn;
+	Input *InSSSIOR;
+	Input *InSSSStrength;
+	Input *InSSSScale;
+
 	Input *InRefractionNest;
 	Input *InRefrIOR;
 	Input *InRefrInt;
@@ -288,13 +367,15 @@ protected:
 	// the Blinn inputs
 	virtual void AddAllCookInputs();
 	virtual void AddDiffuseCookInputs();
+	virtual void AddCoatingInputs();
 	virtual void BeginSpecularCookNest();
 	virtual void AddSpecularCookInputs(bool addSpecularExponent = true);
 	virtual void EndSpecularCookNest();
 	virtual void AddReflCookInputs();
 	virtual void AddGICookInputs();
 	virtual void AddBumpmapCookInputs();
-	virtual void AddRefractionCookInputs();
+	virtual void AddSSSCookInputs();
+	
 	virtual void AddTransmittanceCookInputs();
 	virtual void AddLightingShadowsCookInputs();
 

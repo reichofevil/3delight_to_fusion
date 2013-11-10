@@ -202,6 +202,7 @@ protected:
 		char *SpecRoughFile;					// the filename of the texture file on disk
 		char *SpecRoughPathFile;				// path & filename of the texture file
 		Color4f diff_color;
+		Color4f Incan;
 		Color4f spec_color;
 		float32 spec_int;
 		float32 spec_expo;
@@ -213,6 +214,9 @@ protected:
 		Color4f refl_color;
 		float32 refl_rough;
 		float32 refl_int;
+		float32 FogStrength;
+		Color4f ReflFog;
+		float32 RefraSamples;
 		char *ReflRoughFile;					// the filename of the texture file on disk
 		char *ReflRoughPathFile;				// path & filename of the texture file
 		char *ReflColorFile;					// the filename of the texture file on disk
@@ -224,6 +228,17 @@ protected:
 		char *BumpPathFile;
 		float32 BumpBound;
 		float32 BumpStrength;
+
+	 	Color4f CoatingColor;
+		float32 CoatingOn;
+		float32 CoatIOR;
+		float32 CoatSamples;
+		Color4f CoatTrans;
+		float32 CoatingThick;
+		float32 CoatingRough;
+		float32 CoatingEnv;
+		float32 CoatingSpec;
+		float32 CoatingRefl;
 
 		float32 spec_intensity;
 		float32 spec_ior;
@@ -242,6 +257,18 @@ protected:
 		float32 fogmindist;
 		float32 fogmaxdist;
 		Color4f fogcolor;
+		float32 SpecularEnv;
+		float32 SpecularRefl;
+		float32 SpecularSpec;
+		float32 SpecSamples;
+		Color4f ReflAniso;
+		float32 SpecularAniso;
+
+		float32 SSS_on;
+		Color4f SSS_color;
+		float32 SSSIOR;
+		float32 SSSStrength;
+		float32 SSSScale;
 
 	};
 
