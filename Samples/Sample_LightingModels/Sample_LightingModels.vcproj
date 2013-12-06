@@ -321,7 +321,7 @@
 				OutputFile="$(OutDir)\$(ProjectName)_x64.plugin"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\lib"
+				AdditionalLibraryDirectories="D:\git\3delight_to_fusion\lib64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				LargeAddressAware="2"

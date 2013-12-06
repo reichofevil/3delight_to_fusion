@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8,00"
-	Name="Sample_RIB"
+	Name="ROE_3DELight_RIB"
 	ProjectGUID="{BA9BE53A-3499-47BC-9506-EDE453BCCECE}"
 	Keyword="Win32Proj"
 	>

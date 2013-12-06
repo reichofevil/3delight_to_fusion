@@ -321,7 +321,7 @@
 				OutputFile="$(OutDir)\$(ProjectName).plugin"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\lib"
+				AdditionalLibraryDirectories="..\..\lib64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				LargeAddressAware="2"

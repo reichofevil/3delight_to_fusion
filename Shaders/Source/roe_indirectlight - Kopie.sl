@@ -40,14 +40,9 @@ light roe_indirectlight(
 		{
 			if( finalgather == 1 )
 			{
-				/*Cl = intensity * indirectdiffuse(
-						Ps, shading_normal, samples, "maxdist", maxdist );*/
-				Cl = trace(
-					Ps, shading_normal,
-					"raytype", "transmission",
-					"samples", samples,
-					"bsdf", "cosine");		
-			
+				Cl = intensity * 
+					indirectdiffuse(
+						Ps, shading_normal, samples, "maxdist", maxdist );
 			}
 			else
 			{

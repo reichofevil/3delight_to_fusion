@@ -405,6 +405,8 @@ void _3DelightMaterial(
 		normal i_normal;
 		normal i_bump_normal;
 		string l_envmap;
+		float i_do_gi;
+		float i_gi_samples;
 
 		output color o_outColor;
 		output color o_outTransparency;)
@@ -815,15 +817,38 @@ void _3DelightMaterial(
 
 	if( diffuse_color != 0 )
 	{
+			
 		if( i_sss_on != 1 || __is_subsurface_ray == 1 )
 		{
 			color indirect_diffuse_weight =
 				coating_absorbed*diffuse_color;
+					color IBL = 0;
+			
+			color out_visibility = 0;
+			color out_environment_diffuse = 0;
+			color out_color_bleeding = 0;
 
 			/* Maya's Global Illumination */
-			indirect_diffuse = getGlobalIlluminationComponents(
+			/*indirect_diffuse = getGlobalIlluminationComponents(
 				Nf_base, indirect_diffuse_weight,
-				gi_visibility, gi_env_diffuse, gi_color_bleeding );
+				gi_visibility, gi_env_diffuse, gi_color_bleeding );*/
+			if (i_do_gi == 1)
+			{			
+				indirect_diffuse = trace(
+					P, normalize(N),
+					"raytype", "diffuse",
+					"samples", i_gi_samples,
+					"bsdf", "oren-nayar",
+					"transmission", out_visibility,
+					"weight", indirect_diffuse_weight,
+					"wo", V,
+					"roughness", i_diffuse_roughness,
+					"environment:map", l_envmap,
+					"environmentcontribution", out_environment_diffuse );
+					
+				out_color_bleeding = indirect_diffuse - out_environment_diffuse;
+				indirect_diffuse = out_environment_diffuse + out_color_bleeding;
+			}	
 
 		}
 		else
@@ -873,7 +898,14 @@ void _3DelightMaterial(
 							"irradiance", diffuse * diffuse_color);
 			sub_surface /= diffuse_color * coating_absorbed;
 		}
+		
+		
+		
 	}
+
+	
+	
+					
 
 	o_outColor =
 		coating * coating_color +
@@ -893,6 +925,9 @@ void _3DelightMaterial(
 surface RoEShader3
 (
 		string diffTex = "";
+		string reflColorTex = "";
+		string reflRoughTex = "";
+		string i_inca_tex = "";
 		
 		float ia_coating_on = 1 ;
 		color ia_coating_color = 1;
@@ -917,6 +952,7 @@ surface RoEShader3
 		float ia_reflect_ior = 1.333;
 		float ia_reflect_anisotropy = 0;
 		color ia_reflect_anisotropy_direction = 0;
+		string i_aniso_tex ="";
 		point ia_reflect_anisotropy_space = 0;
 		float ia_reflect_has_reflection = 1;
 		float ia_reflect_has_specular = 1;
@@ -940,6 +976,9 @@ surface RoEShader3
 		float ia_refract_fog_strength = 0;
 
 		color ia_transparency = 0;
+		
+		float ia_do_gi = 0;
+		float ia_gi_samples = 64;
 
 		float ia_bump_layer = 0;
 		normal ia_normalCamera = 0;
@@ -968,6 +1007,44 @@ surface RoEShader3
 		{
 			_diffTex = ia_diffuse_color;
 		}
+		
+		color _reflTex = 1;
+		if (reflColorTex != "")
+		{
+			_reflTex = color texture (reflColorTex)*ia_reflect_color;
+		}
+		else
+		{
+			_reflTex = ia_reflect_color;
+		}
+		float _refRoughTex = 1;
+		if (reflRoughTex != "")
+		{
+			_refRoughTex = comp((1- color texture(reflRoughTex)) * ia_reflect_roughness,0) ;
+		}
+		else
+		{
+			_refRoughTex = ia_reflect_roughness;
+		}
+		
+		color _aniso_direction = 1;
+		if (i_aniso_tex != "")
+		{
+			_aniso_direction = color texture (i_aniso_tex) ;
+		}
+		else
+		{
+			_aniso_direction = ia_reflect_anisotropy_direction;
+		}
+		color _inca_in = 0;
+		if (i_inca_tex != "")
+		{
+			_inca_in = color texture (i_inca_tex) ;
+		}
+		else
+		{
+			_inca_in = ia_incandescence;
+		}
 
 		
 		
@@ -976,7 +1053,7 @@ surface RoEShader3
 		_diffTex,
 		/*ia_diffuse_color,*/
 		ia_diffuse_roughness,
-		ia_incandescence,
+		_inca_in,
 
 		/* Subsurface scattering parameters */
 		ia_sss_on,
@@ -990,13 +1067,13 @@ surface RoEShader3
 
 		/* Specular parameters */
 		/* Reflection parameters */
-		ia_reflect_color,
-		ia_reflect_roughness,
+		_reflTex,
+		_refRoughTex,
 		ia_reflect_ior,
 		ia_reflect_anisotropy,
 		/*ia_reflect_anisotropy_space,*/
 		point(s,t,0),
-		ia_reflect_anisotropy_direction,
+		_aniso_direction,
 		ia_reflect_samples,
 		ia_reflect_has_reflection,
 		ia_reflect_has_specular,
@@ -1030,6 +1107,8 @@ surface RoEShader3
 		N,
 		N,
 		ia_envmap,
+		ia_do_gi,
+		ia_gi_samples,
 
 		oa_outColor,
 		oa_outTransparency

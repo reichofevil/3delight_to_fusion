@@ -38,6 +38,7 @@ public:
 	Image *DiffuseImg;
 
 	Color4f Incan;
+	Image *IncaImg;
 
 	Color4f Specular;	
 	Image *SpecColorImg;
@@ -302,6 +303,7 @@ public:
 	Input *InSpecularAnisoG;
 	Input *InSpecularAnisoB;
 	Input *InSpecularAniso;
+	Input *InIncaTex;
 
 	Input *InReflNest;
 	Input *InReflColorNest;

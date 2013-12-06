@@ -430,7 +430,7 @@ bool RendererRIB3D::AddInputsTagList(TagList &tags)
 			INPID_InputControl,	CHECKBOXCONTROL_ID,
 			INP_MinAllowed,		0.0,
 			INP_MaxAllowed,		1.0,
-			INP_Default,			0.0,
+			INP_Default,			1.0,
 			TAG_DONE);
 
 	InProgCons = AddInput("output progress to console", "EnableProgCons",
@@ -660,7 +660,7 @@ bool RendererRIB3D::AddInputsTagList(TagList &tags)
 			TAG_DONE);
 	EndControlNest();
 
-	InPhotonNest = BeginControlNest("Photons", "Pho", false);
+	/*InPhotonNest = BeginControlNest("Photons", "Pho", false);
 		InEnablePhotons = AddInput("enable Photons(and do finalgather)", "EnablePho",
 			LINKID_DataType,		CLSID_DataType_Number,
 			INPID_InputControl,	CHECKBOXCONTROL_ID,
@@ -710,7 +710,7 @@ bool RendererRIB3D::AddInputsTagList(TagList &tags)
 			INP_MaxScale,			256.0,
 			INP_Default,			64.0,
 			TAG_DONE);
-	EndControlNest();
+	EndControlNest();*/
 
 	InExportNest = BeginControlNest("Export RIB (do not render)", "Export", false);
 		InEnableExport = AddInput("do Export", "EnableExport",
@@ -795,13 +795,13 @@ void RendererRIB3D::ShowInputs(bool visible)
 		InAODepth->ShowInputControls();
 		InEnvNest->ShowInputControls();
 		InEnvMap->ShowInputControls();
-		InPhotonNest->ShowInputControls();
+		/*InPhotonNest->ShowInputControls();
 		InPhotonSamples->ShowInputControls();
 		InPhotonStrength->ShowInputControls();
 		InPhotonBounce->ShowInputControls();
 		InPhotonDist->ShowInputControls();
 		InPhotonRays->ShowInputControls();
-		InEnablePhotons->ShowInputControls();
+		InEnablePhotons->ShowInputControls();*/
 		InExportNest->ShowInputControls();
 		InExportFile->ShowInputControls();
 		InEnableExport->ShowInputControls();
@@ -852,13 +852,13 @@ void RendererRIB3D::ShowInputs(bool visible)
 		InAODepth->HideInputControls();
 		InEnvNest->HideInputControls();
 		InEnvMap->HideInputControls();
-		InPhotonNest->HideInputControls();
+		/*InPhotonNest->HideInputControls();
 		InPhotonSamples->HideInputControls();
 		InPhotonStrength->HideInputControls();
 		InPhotonBounce->HideInputControls();
 		InPhotonDist->HideInputControls();
 		InPhotonRays->HideInputControls();
-		InEnablePhotons->HideInputControls();
+		InEnablePhotons->HideInputControls();*/
 		InExportNest->HideInputControls();
 		InExportFile->HideInputControls();
 		InEnableExport->HideInputControls();
@@ -1038,7 +1038,7 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 	const char *envPathFile = (const char *) *(env_map);
 	rmTags.Add(RenRM_EnvMap, envPathFile);
 	//Photons
-	bool DoPho = *InEnablePhotons->GetValue(req) > 0.5;
+	/*bool DoPho = *InEnablePhotons->GetValue(req) > 0.5;
 	float PhoSamples = *InPhotonSamples->GetValue(req);
 	rmTags.Add(RenRM_DoPho, DoPho);
 	rmTags.Add(RenRM_PhoSamples, PhoSamples);
@@ -1052,7 +1052,7 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 	float PhoBounce = *InPhotonBounce->GetValue(req);
 	rmTags.Add(RenRM_PhoDist, PhoDist);
 	rmTags.Add(RenRM_PhoBounce, PhoBounce);
-	rmTags.Add(RenRM_PhoRays, PhoRays);
+	rmTags.Add(RenRM_PhoRays, PhoRays);*/
 	//RIB Export
 	InDoRIB = *InEnableExport->GetValue(req) > 0.5;
 	rmTags.Add(RenRM_DoRIB, InDoRIB);
@@ -1450,12 +1450,12 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 	//path to shader files
 	ShaderPath = (const char *) tags.GetPtr(RenRM_ShaderPathName, NULL);
 	//photons
-	DoPhotons = tags.GetBool(RenRM_DoPho,false);
+	/*DoPhotons = tags.GetBool(RenRM_DoPho,false);
 	PhotonCount =tags.GetDouble(RenRM_PhoSamples,10000.0);
 	PhotonStrength = tags.GetDouble(RenRM_PhoStrength,1.0);
 	PhotonDist = tags.GetDouble(RenRM_PhoDist,1.0e36);
 	PhotonBounce = tags.GetDouble(RenRM_PhoBounce, 5);
-	PhotonRays = tags.GetDouble(RenRM_PhoRays, 64);
+	PhotonRays = tags.GetDouble(RenRM_PhoRays, 64);*/
 	//rib export
 	DoRib = tags.GetBool(RenRM_DoRIB, false);
 	RibFile = (const char *) tags.GetPtr(RenRM_RibFile,NULL);
@@ -2157,7 +2157,7 @@ void RendererRIB3D::RenderScene()
 		rm->RiOptionV("trace", 1, Stokens , Sparams);
 
 		//photons
-		if (DoPhotons){
+		/*if (DoPhotons){
 			RtToken Ptokens[] = { "integer emit" };
 			int pho_number = PhotonCount;
 			RtPointer Pparams[] = { &pho_number };
@@ -2182,7 +2182,7 @@ void RendererRIB3D::RenderScene()
 			RtToken Ptokens4[] = { "string causticmap" };
 			RtPointer Pparams4[] = { &pho_map_name_caus };
 			rm->RiAttributeV("photon", 1, Ptokens4, Pparams4);
-		}
+		}*/
 		
 
 		// depth of field
@@ -2252,12 +2252,12 @@ void RendererRIB3D::RenderScene()
 		RtPointer Tparams[] = { &trans_number };
 	    rm->RiAttributeV("visibility", 1, Ttokens , Tparams);
 	    
-		if (DoAO){
-		//enable AO for all objects
-		char *occ_string = "opaque";
-		RtToken otokens[] = { "string transmission"};
-		RtPointer oparams[] = { &occ_string };
-	    rm->RiAttributeV("visibility", 1, otokens , oparams);
+		//if (DoAO){
+		////enable AO for all objects
+		//char *occ_string = "shader";
+		//RtToken otokens[] = { "string transmission"};
+		//RtPointer oparams[] = { &occ_string };
+	 //   rm->RiAttributeV("visibility", 1, otokens , oparams);
 		
 		
 	    //enable calculation of GI from shader color for all objects
@@ -2265,7 +2265,7 @@ void RendererRIB3D::RenderScene()
 		RtToken Htokens[] = { "string diffusehitmode"};
 		RtPointer Hparams[] = { &Hitmode };
 	    rm->RiAttributeV("shade", 1, Htokens , Hparams);
-		}
+		//}
 
 		 //enable secondary rays for all objects
 		int d_number = 1;
@@ -2279,6 +2279,17 @@ void RendererRIB3D::RenderScene()
 		RtPointer Rparams[] = { &ray_spec };
 	    rm->RiAttributeV("visibility", 1, Rtokens , Rparams);
 
+		////enable raytrace 
+		//char* ray_trace = "shader";
+		//RtToken RRtokens[] = { "string transmissionhitmode" };
+		//RtPointer RRparams[] = { &ray_trace };
+	 //   rm->RiAttributeV("shade", 1, RRtokens , RRparams);
+
+		////enable raytrace reflections for all objects (needs special shader)
+		//char* ray_SSS = "SSS";
+		//RtToken RSSStokens[] = { "string subsurface" };
+		//RtPointer RSSSparams[] = { &ray_spec };
+	 //   rm->RiAttributeV("visibility", 1, RSSStokens , RSSSparams);
 
 
 
@@ -2491,6 +2502,9 @@ void RendererRIB3D::CreateRmTextures()
 					Image *img = NULL;
 					img = mtlCookData->DiffuseImg;
 
+					Image *img_inca = NULL;
+					img_inca = mtlCookData->IncaImg;
+
 					Image *spec_img1 = NULL;
 					spec_img1 = mtlCookData->SpecColorImg;
 					
@@ -2532,11 +2546,6 @@ void RendererRIB3D::CreateRmTextures()
 					Color4f i_ReflAniso = mtlCookData->ReflAniso;
 					float32 i_SpecularAniso = mtlCookData->SpecularAniso;
 					
-					Image *refl_img1 = NULL;
-					refl_img1 = mtlCookData->ReflColorImg;
-
-					Image *refl_img2 = NULL;
-					refl_img2 = mtlCookData->ReflRoughImg;
 
 					Image *bump_img = NULL;
 					bump_img = mtlCookData->BumpImg;
@@ -2692,6 +2701,47 @@ void RendererRIB3D::CreateRmTextures()
 						mtl.SpecColorFile = "";
 						mtl.SpecColorPathFile = "";
 					}
+					if (img_inca)
+					{
+						char *tmpTexTiffinca = NULL;		// we'll write images from Fusion into the .tiff format
+						char *tmpTexTxinca = NULL;			// and then convert them into this Renderman preferred .tx format
+
+						char *edge = "clamp";		
+						//char *edge = "periodic";
+		
+						char *tiffPathFileinca, *tiffFileinca;
+						CreateTempFilename(tiffPathFileinca, tiffFileinca, "Tex", "tiff");
+						
+						CheckAbort();
+		
+						WriteTiffToDisk(img_inca, tiffPathFileinca);
+							
+						CheckAbort();
+						
+				
+						if (mtl.DiffuseType == Material::Tx)
+						{
+							char *txPathFileinca, *txFileinca;
+							CreateTempFilename(txPathFileinca, txFileinca, "Tex", "tx");
+							mtl.IncaFile = txFileinca;
+							mtl.IncaPathFile = txPathFileinca;
+							
+							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
+							rm->RiMakeTexture(tiffPathFileinca, txPathFileinca, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
+							
+							CheckAbort();
+						}
+						else if (mtl.DiffuseType == Material::Tiff)
+						{
+							mtl.IncaFile = tiffFileinca;
+							mtl.IncaPathFile = tiffPathFileinca;
+						}
+					}
+					else
+					{
+						mtl.IncaFile = "";
+						mtl.IncaPathFile = "";
+					}
 					if (spec_img2)
 					{
 						char *tmpTexTiff3 = NULL;		// we'll write images from Fusion into the .tiff format
@@ -2774,89 +2824,7 @@ void RendererRIB3D::CreateRmTextures()
 						mtl.SpecRoughFile = "";
 						mtl.SpecRoughPathFile = "";
 					}
-					if (refl_img1)
-					{
-						char *tmpTexTiff5 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx5 = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile5, *tiffFile5;
-						CreateTempFilename(tiffPathFile5, tiffFile5, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(refl_img1, tiffPathFile5);
-							
-						CheckAbort();
-						
 				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile5, *txFile5;
-							CreateTempFilename(txPathFile5, txFile5, "Tex", "tx");
-							mtl.ReflColorFile = txFile5;
-							mtl.ReflColorPathFile = txPathFile5;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile5, txPathFile5, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.ReflColorFile = tiffFile5;
-							mtl.ReflColorPathFile = tiffPathFile5;
-						}
-					}
-					else
-					{
-						mtl.ReflColorFile = "";
-						mtl.ReflColorPathFile = "";
-					}
-					if (refl_img2)
-					{
-						char *tmpTexTiff6 = NULL;		// we'll write images from Fusion into the .tiff format
-						char *tmpTexTx6 = NULL;			// and then convert them into this Renderman preferred .tx format
-
-						char *edge = "clamp";		
-						//char *edge = "periodic";
-		
-						char *tiffPathFile6, *tiffFile6;
-						CreateTempFilename(tiffPathFile6, tiffFile6, "Tex", "tiff");
-						
-						CheckAbort();
-		
-						WriteTiffToDisk(refl_img2, tiffPathFile6);
-							
-						CheckAbort();
-						
-				
-						if (mtl.DiffuseType == Material::Tx)
-						{
-							char *txPathFile6, *txFile6;
-							CreateTempFilename(txPathFile6, txFile6, "Tex", "tx");
-							mtl.ReflRoughFile = txFile6;
-							mtl.ReflRoughPathFile = txPathFile6;
-							
-							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
-							rm->RiMakeTexture(tiffPathFile6, txPathFile6, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
-							
-							CheckAbort();
-						}
-						else if (mtl.DiffuseType == Material::Tiff)
-						{
-							mtl.ReflRoughFile = tiffFile6;
-							mtl.ReflRoughPathFile = tiffPathFile6;
-						}
-					}
-					else
-					{
-						mtl.ReflRoughFile = "";
-						mtl.ReflRoughPathFile = "";
-					}
-					
 					if (bump_img!=NULL)
 					{
 						char *tmpTexTiff8 = NULL;		// we'll write images from Fusion into the .tiff format
@@ -3174,7 +3142,7 @@ void RendererRIB3D::CreateLightLists()
 	// surface.  Since we can't modify the Scene3D to store this information (as its a refcounted shared object) we'll need to build up a 
 	// separate "database" of surface & light information.  We'll construct a Light/Surface wrapper object for each light/surface in the 
 	// Scene3D and store our information in those.
-		if (DoPhotons)
+		/*if (DoPhotons)
 		{
 			rm->RiTransformBegin();	
 			rm->RiIdentity();
@@ -3199,7 +3167,7 @@ void RendererRIB3D::CreateLightLists()
 			PhtotonIndirect.RmLight = rm->RiLightSourceV("roe_indirectlight", nParams, tokens, params);
 			rm->RiTransformEnd();
 			rm->RiIlluminate(PhtotonIndirect.RmLight,RI_TRUE);
-		}
+		}*/
 
    // Create a full intensity ambient light.  If global lighting is off we'll toggle the fullAmbient and disable any other lights in the scene.
 	rm->RiTransformBegin();	
@@ -3249,14 +3217,14 @@ void RendererRIB3D::CreateLightLists()
 				RtPointer name_params[] = { &light_name };
 				rm->RiAttributeV("identifier",1,name_token, name_params);
 				//checking if light is coming from an actual light or from an env map. only "real" lights should emitt photons
-				if ((lightID == CLSID_Light_Point_Data)||(lightID == CLSID_Light_Directional_Data)||(lightID == CLSID_Light_Spot_Data)||(COMPANY_ID_DOT + CLSID_Light_Directional_Data)||(COMPANY_ID_DOT + CLSID_Light_Point_Data)){
+				/*if ((lightID == CLSID_Light_Point_Data)||(lightID == CLSID_Light_Directional_Data)||(lightID == CLSID_Light_Spot_Data)||(COMPANY_ID_DOT + CLSID_Light_Directional_Data)||(COMPANY_ID_DOT + CLSID_Light_Point_Data)){
 					if (DoPhotons){
 						char *pho_number1 = "on";
 						RtToken Ptokens4[] = { "string emitphotons" };
 						RtPointer Pparams4[] = { &pho_number1 };
 						rm->RiAttributeV("light", 1, Ptokens4, Pparams4);
 					}
-				}
+				}*/
 				rm->RiTransformBegin();								// push the current transform
 				rm->RiIdentity();										// make sure we are specifying the lights transform wrt world space
 				ConcatTransform(light.Node->ModelToWorld);	// setup the lights transform
@@ -3706,7 +3674,7 @@ RtLightHandle RendererRIB3D::CreateSpotLight(Node3D *n)
 	}
 	if ((shadow_on == 1)&&(ShadowsEnabled == true))
 	{
-	const int nParams = 10;
+	const int nParams = 9;
 
 	RtToken tokens[nParams] = 
 		{ 
@@ -3718,7 +3686,7 @@ RtLightHandle RendererRIB3D::CreateSpotLight(Node3D *n)
 			"float conedeltaangle",
 			"float beamdistribution",
 			"string shadowmap",
-			"float samples",
+			//"float samples",
 			"float decay",
 		//	"blur",
 		};
@@ -3733,7 +3701,7 @@ RtLightHandle RendererRIB3D::CreateSpotLight(Node3D *n)
 			&coneDeltaAngle,
 			&beamDistribution,
 			&rayshadows,
-			&samples,
+			//&samples,
 			&decay_type,
 		//	&Sblur,
 		};
@@ -4020,7 +3988,7 @@ void RendererRIB3D::RenderNode(Node3D *n)
 		RtPointer name_params2[] = { &node_name };
 		rm->RiAttributeV("identifier",1, name_tokens2, name_params2);
 	  }
-	  if (DoPhotons){
+	  /*if (DoPhotons){
 		int pho_number = 1;
 		RtToken Ptokens2[] = { "integer photon" };
 		RtPointer Pparams2[] = { &pho_number };
@@ -4031,7 +3999,7 @@ void RendererRIB3D::RenderNode(Node3D *n)
 		RtPointer Pparams5[] = { &pho_number2 };
 		rm->RiAttributeV("photon", 1, Ptokens5, Pparams5);
 
-	}
+		}*/
 		if (DoMoBlur)
 		{
 			RtInt MBSamples = (RtInt) shutterSamples;
@@ -5062,30 +5030,23 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		{
 		spec_color_tex = mtl->SpecColorFile;
 		}
-		const char *spec_expo_tex = "";
+
+		const char *refl_rough_tex = "";
+		if (mtl->SpecRoughFile)
+		{
+		refl_rough_tex = mtl->SpecRoughFile;
+		}
+
+		const char *aniso_tex = "";
 		if (mtl->SpecExpoFile )
 		{
-		spec_expo_tex = mtl->SpecExpoFile;
+			aniso_tex = mtl->SpecExpoFile;
 		}
-		const char *spec_rough_tex = "";
-		if (mtl->SpecRoughFile )
+
+		const char *inca_tex = "";
+		if (mtl->IncaFile )
 		{
-		spec_rough_tex = mtl->SpecRoughFile;
-		}
-		const char *refl_color_tex = "";
-		if (mtl->ReflColorFile )
-		{
-		refl_color_tex = mtl->ReflColorFile;
-		}
-		const char *refl_rough_tex = "";
-		if (mtl->ReflRoughFile )
-		{
-		refl_rough_tex = mtl->ReflRoughFile;
-		}
-		const char *refl_int_tex = "";
-		if (mtl->ReflIntFile )
-		{
-		refl_int_tex = mtl->ReflIntFile;
+			inca_tex = mtl->IncaFile;
 		}
 
 		float diff_roughness = mtl->diff_rough;
@@ -5104,8 +5065,9 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 
 		float refr_ior = mtl->refrior;
 
-		int enableGI = mtl->DoGI;
+		float enableGI = mtl->DoGI;
 		float GI_Val = mtl->GIStrength;
+		if (Proxy>1) GI_Val /= Proxy;
 
 		float Kr = mtl->refl_int;
 		float Ks = mtl->spec_int;
@@ -5116,13 +5078,14 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		float occ_dist = AODepth;
 		float Do_AO = DoAO;
 		float DoPho = 0;
-		if ((DoPhotons)||(enableGI==1)) DoPho = 1.0;
+		//if ((DoPhotons)||(enableGI==1)) DoPho = 1.0;
 
 		float ia_coating_on = mtl->CoatingOn;
 		Color4f ia_coating_color = mtl->CoatingColor;
 		float ia_coating_roughness = mtl->CoatingRough;
 		float ia_coating_ior = mtl->CoatIOR;
 		float ia_coating_samples = mtl->CoatSamples;
+		if (Proxy>1) ia_coating_samples /= Proxy;
 		Color4f ia_coating_transmittance = mtl->CoatTrans;
 		float ia_coating_thickness = mtl->CoatingThick;
 
@@ -5130,12 +5093,14 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		float32 ia_SpecularRefl = mtl->SpecularRefl;
 		float32 ia_SpecularSpec = mtl->SpecularSpec;
 		float32 ia_SpecSamples = mtl->SpecSamples;
+		if (Proxy>1) ia_SpecSamples /= Proxy;
 		Color4f ia_ReflAniso = mtl->ReflAniso;
 		float32 ia_SpecularAniso = mtl->SpecularAniso;
 
 		float32 ia_refract_fog_strength = mtl->FogStrength;
 		Color4f ia_refract_fog_color = mtl->ReflFog;
 		float32 ia_RefraSamples = mtl->RefraSamples;
+		if (Proxy>1) ia_RefraSamples /= Proxy;
 
 		float32 ia_CoatingEnv = mtl->CoatingEnv;
 		float32 ia_CoatingSpec = mtl->CoatingSpec;
@@ -5151,7 +5116,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 
 		Color4f ia_incandescence = mtl->Incan;
 	
-		const int n = 36;
+		const int n = 42;
 		//throw FuException3D("env path map 3: %s", txPathFile);
 
 		
@@ -5191,8 +5156,16 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			"float ia_sss_scattering_scale",
 			"float ia_sss_ior",
 			"float ia_sss_scale",
+			"float ia_do_gi",
+			"float ia_gi_samples",
 			"uniform string ia_envmap",
 			"uniform string diffTex",
+			"uniform string reflRoughTex",
+			"uniform string i_aniso_tex",
+			"uniform string i_inca_tex",
+			"uniform string reflColorTex",
+			
+
 		};
 		
 		RtPointer params[n] =
@@ -5231,8 +5204,16 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			&ia_SSSStrength,
 			&ia_SSSIOR,
 			&ia_SSSScale,
+			&enableGI,
+			&GI_Val,
 			&txPathFile,
 			&filename,
+			&refl_rough_tex,
+			&aniso_tex,
+			&inca_tex,
+			&spec_color_tex,
+			
+
 		};
 		const char *bump_tex = "";
 		float bump_int = mtl->BumpStrength;
@@ -5281,8 +5262,8 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			rm->RiDisplacement("",RI_NULL);
 		}
 
-		//rm->RiColor(Cs.V);
-		//rm->RiOpacity(Os.V);
+		rm->RiColor(diffColor.V);
+		rm->RiOpacity(Os.V);
 		rm->RiSurfaceV("RoEShader3", n , tokens, params );
 	}
 	else if ((mtl->IsSupported)&&(mtl->shader_type==4))

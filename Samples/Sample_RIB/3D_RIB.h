@@ -201,6 +201,8 @@ protected:
 		char *SpecExpoPathFile;				// path & filename of the texture file
 		char *SpecRoughFile;					// the filename of the texture file on disk
 		char *SpecRoughPathFile;				// path & filename of the texture file
+		char *IncaFile;					// the filename of the texture file on disk
+		char *IncaPathFile;				// path & filename of the texture file
 		Color4f diff_color;
 		Color4f Incan;
 		Color4f spec_color;

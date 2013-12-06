@@ -14,16 +14,16 @@
 float
 getGiEffect()
 {
-	uniform float effect = 0;
-	option( "user:_3dfm_gi_effect", effect );
+	uniform float effect = 3;
+	//option( "user:_3dfm_gi_effect", effect );
 	
 	return effect;
 }
 
 float getGiAddToFinalMix()
 {
-	uniform float add_to_final_mix = 0;
-	option( "user:_3dfm_gi_add_to_final_mix", add_to_final_mix );
+	uniform float add_to_final_mix = 1;
+	//option( "user:_3dfm_gi_add_to_final_mix", add_to_final_mix );
 	
 	return add_to_final_mix;
 }

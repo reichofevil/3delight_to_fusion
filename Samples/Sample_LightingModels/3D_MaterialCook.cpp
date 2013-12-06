@@ -802,7 +802,7 @@ void MtlCookInputs3D::AddCoatingInputs()
 			LINKID_LegacyID,			FuID(".coating_on"),
 			I3D_AutoFlags,				PF_AutoProcess,
 			I3D_ParamName,				FuID("coating_on"),
-			INP_Default,				1.0,
+			INP_Default,				0.0,
 			TAG_DONE);
 
 		InCoatingColorNest = BeginGroup("Color", "Color", true, false);
@@ -1001,7 +1001,7 @@ void MtlCookInputs3D::AddDiffuseCookInputs()
 				IC_ControlID,				1,
 				INP_MinScale,				0.0,
 				INP_MaxScale,				1.0,
-				INP_Default,				1.0,
+				INP_Default,				.8,
 				INP_SubType,				IST_ColorG,
 				TAG_DONE);
 
@@ -1015,7 +1015,7 @@ void MtlCookInputs3D::AddDiffuseCookInputs()
 				IC_ControlID,				2,
 				INP_MinScale,				0.0,
 				INP_MaxScale,				1.0,
-				INP_Default,				1.0,
+				INP_Default,				.8,
 				INP_SubType,				IST_ColorB,
 				TAG_DONE);
 
@@ -1028,7 +1028,7 @@ void MtlCookInputs3D::AddDiffuseCookInputs()
 				INP_Default,				DefaultAlpha,
 				INP_MinAllowed,			0.0,
 				INP_MinScale,				0.0,
-				INP_MaxScale,				1.0,
+				INP_MaxScale,				.8,
 				IC_Visible,					FALSE,
 				TAG_DONE);
 
@@ -1061,7 +1061,7 @@ void MtlCookInputs3D::AddDiffuseCookInputs()
 			INPID_InputControl,		SLIDERCONTROL_ID,
 			LINKID_LegacyID,			FuID(".Roughness"),
 			I3D_AutoFlags,				PF_AutoProcess,
-			INP_Default,				.1,
+			INP_Default,				.3,
 			INP_MinAllowed,			0.0,
 			INP_MinScale,				0.0,
 			INP_MaxScale,				1.0,
@@ -1109,6 +1109,17 @@ void MtlCookInputs3D::AddDiffuseCookInputs()
 				INP_SubType,				IST_ColorB,
 				TAG_DONE);
 			EndGroup();
+			
+			InIncaTex = AddInput("Incandescene Texture", "Inca_Tex",
+				LINKID_DataType,			CLSID_DataType_Image,//CLSID_DataType_MtlGraph3D,
+				//LINKID_AllowedDataType,	CLSID_DataType_Image,
+				LINKID_LegacyID,			FuID("..IncaTex"),
+				I3D_AutoFlags,				PF_AutoProcess,
+				I3D_ParamName,				FuID("IncaTex"),
+				I3D_ChildSlot,				MtlCookData3D::CMS_Diffuse,
+				LINK_Main,					MMID_DiffuseColor,
+				INP_Required,				FALSE,
+				TAG_DONE);
 		
 	EndGroup();
 	EndGroup();
@@ -1193,17 +1204,6 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 		IC_Visible,					FALSE,
 		TAG_DONE);
 
-	InSpecularIntensityMtl = AddInput("Specular Intensity Material", "Intensity.Material",
-		LINKID_DataType,			CLSID_DataType_MtlGraph3D,
-		LINKID_AllowedDataType,	CLSID_DataType_Image,
-		LINKID_LegacyID,			FuID(".SpecularIntensityTex"),
-		I3D_AutoFlags,				PF_AutoProcess,
-		I3D_ParamName,				FuID("SpecularIntensityMtl"),
-		I3D_ChildSlot,				MtlCookData3D::CMS_SpecularIntensity,
-		LINK_Main,					MMID_SpecularIntensity,
-		INP_Required,				FALSE, 
-		TAG_DONE);
-
 
 	if (addSpecularExponent)
 	{
@@ -1221,7 +1221,7 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 			IC_Visible,					FALSE,
 			TAG_DONE);
 
-		InSpecularExponentMtl = AddInput("Specular Roughness Material", "Roughness.Material",
+		InSpecularExponentMtl = AddInput("Reflection Roughness Material", "Roughness.Material",
 			LINKID_DataType,			CLSID_DataType_MtlGraph3D,
 			LINKID_AllowedDataType,	CLSID_DataType_Image,
 			LINKID_LegacyID,			FuID(".SpecularExponentTex"),
@@ -1253,7 +1253,7 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 		INP_MinAllowed,			0.0,
 		INP_MinScale,				0.0,
 		INP_MaxScale,				1.0,
-		INP_Default,				0.1,
+		INP_Default,				0.05,
 		TAG_DONE);
 
 	InSpecularRefl = AddInput("reflect geo", "sepc_refl", 
@@ -1350,6 +1350,17 @@ void MtlCookInputs3D::AddSpecularCookInputs(bool addSpecularExponent)
 			TAG_DONE);
 
 	EndGroup();
+
+		InSpecularIntensityMtl = AddInput("Aniso Vector Material", "AnisoV",
+			LINKID_DataType,			CLSID_DataType_MtlGraph3D,
+			LINKID_AllowedDataType,	CLSID_DataType_Image,
+			LINKID_LegacyID,			FuID(".AnisoTex"),
+			I3D_AutoFlags,				PF_AutoProcess,
+			I3D_ParamName,				FuID("AnisoVector"),
+			I3D_ChildSlot,				MtlCookData3D::CMS_SpecularIntensity,
+			LINK_Main,					MMID_SpecularIntensity,
+			INP_Required,				FALSE, 
+			TAG_DONE);
 }
 
 void MtlCookInputs3D::EndSpecularCookNest()
@@ -1406,16 +1417,17 @@ void MtlCookInputs3D::AddReflCookInputs()
 			INP_SubType,				IST_ColorB,
 			TAG_DONE);
 
-		InReflColorMtl = AddInput("Refraction Color Material", "Material",
-			LINKID_DataType,			CLSID_DataType_Image,//CLSID_DataType_MtlGraph3D,
-			//LINKID_AllowedDataType,	CLSID_DataType_Image,
-			LINKID_LegacyID,			FuID("..RefractionColorTex"),
-			I3D_AutoFlags,				PF_AutoProcess,
-			I3D_ParamName,				FuID("SpecularMtl"),
-			I3D_ChildSlot,				MtlCookData3D::CMS_Specular,
-			LINK_Main,					MMID_SpecularColor,
-			INP_Required,				FALSE, 
-			TAG_DONE);
+		//InReflColorMtl = AddInput("Refraction Color Material", "Material",
+		//	LINKID_DataType,			CLSID_DataType_Image,//CLSID_DataType_MtlGraph3D,
+		//	//LINKID_AllowedDataType,	CLSID_DataType_Image,
+		//	LINKID_LegacyID,			FuID("..RefractionColorTex"),
+		//	I3D_AutoFlags,				PF_AutoProcess,
+		//	I3D_ParamName,				FuID("SpecularMtl"),
+		//	I3D_ChildSlot,				MtlCookData3D::CMS_Specular,
+		//	LINK_Main,					MMID_SpecularColor,
+		//	INP_Required,				FALSE, 
+		//	IC_Visible,					FALSE,
+		//	TAG_DONE);
 
 	EndGroup();
 
@@ -1431,7 +1443,7 @@ void MtlCookInputs3D::AddReflCookInputs()
 		INP_Default,				0.1,
 		TAG_DONE);
 
-	InReflRoughMtl = AddInput("Refraction Rough Material", "RefraRoughMaterial",
+	/*InReflRoughMtl = AddInput("Refraction Rough Material", "RefraRoughMaterial",
 			LINKID_DataType,			CLSID_DataType_MtlGraph3D,
 			LINKID_AllowedDataType,	CLSID_DataType_Image,
 			LINKID_LegacyID,			FuID(".RefraRoughTex"),
@@ -1440,7 +1452,8 @@ void MtlCookInputs3D::AddReflCookInputs()
 			I3D_ChildSlot,				MtlCookData3D::CMS_SpecularExponent,
 			LINK_Main,					MMID_SpecularExponent,
 			INP_Required,				FALSE,
-			TAG_DONE);
+			IC_Visible,					FALSE,
+			TAG_DONE);*/
 
 	InRefrIOR = AddInput("Refraction IOR", "refra_IOR",
 				LINKID_DataType,			CLSID_DataType_Number,
@@ -1676,15 +1689,15 @@ void MtlCookInputs3D::AddGICookInputs()
 				INP_Default,				0.0,
 				TAG_DONE);
 
-			InGIStrength = AddInput("Strength", "GIStrength",
+			InGIStrength = AddInput("Samples", "GIStrength",
 				LINKID_DataType,			CLSID_DataType_Number,
 				INPID_InputControl,		SLIDERCONTROL_ID,
-				LINKID_LegacyID,			FuID("..GIStrength"),
+				LINKID_LegacyID,			FuID("..GISamples"),
 				I3D_AutoFlags,				PF_AutoProcess,
-				I3D_ParamName,				FuID("GIStrength"),
-				INP_MinScale,				0.0,
-				INP_MaxScale,				1.0,
-				INP_Default,				1.0,
+				I3D_ParamName,				FuID("GISamples"),
+				INP_MinScale,				1.0,
+				INP_MaxScale,				64.0,
+				INP_Default,				8.0,
 				TAG_DONE);
 
 	EndGroup();
@@ -1860,6 +1873,13 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 	data->Incan.B = *InIncaB->GetValue(req);
 	data->Incan.A = 1.0f;
 
+	
+	Image *img_inca = (Image *) InIncaTex->GetValue(req);
+	if (img_inca){
+		data->IncaImg = img_inca;
+	}
+	else data->IncaImg = NULL;
+
 	//coating
 	data->CoatingColor.R = *InCoatingR->GetValue(req);
 	data->CoatingColor.G = *InCoatingG->GetValue(req);
@@ -1913,6 +1933,7 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 	}
 	else data->SpecRoughImg = NULL;
 
+
 	// specular intensity
 	data->SpecularIntensity = *InSpecularIntensity->GetValue(req);
 	data->SetChildMtl(MtlCookData3D::CMS_SpecularIntensity, InSpecularIntensityMtl->GetValue(req));
@@ -1933,17 +1954,17 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 	data->Refl.B = *InReflB->GetValue(req);
 	data->Refl.A = 1.0f;														// this value is ignored
 	//data->SetChildMtl(MtlCookData3D::CMS_Specular, InSpecularColorMtl->GetValue(req));
-	Image *img_refl1 = (Image *) InReflColorMtl->GetValue(req);
+	/*Image *img_refl1 = (Image *) InReflColorMtl->GetValue(req);
 	if (img_refl1){
 		data->ReflColorImg = img_refl1;
 	}
-	else data->ReflColorImg = NULL;
+	else data->ReflColorImg = NULL;*/
 
-	Image *img_refl2 = (Image *) InReflRoughMtl->GetValue(req);
+	/*Image *img_refl2 = (Image *) InReflRoughMtl->GetValue(req);
 	if (img_refl2){
 		data->ReflRoughImg = img_refl2;
 	}
-	else data->ReflRoughImg = NULL;
+	else data->ReflRoughImg = NULL;*/
 
 	data->ReflRoughness = *InReflRoughness->GetValue(req);
 
