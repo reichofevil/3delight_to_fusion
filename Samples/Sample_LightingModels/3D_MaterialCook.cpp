@@ -781,7 +781,7 @@ void MtlCookInputs3D::AddAllCookInputs()
 
 	AddReflCookInputs();
 
-	AddSSSCookInputs();
+	//AddSSSCookInputs();
 
 	AddBumpmapCookInputs();
 
@@ -1995,7 +1995,7 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 
 	data->BumpBound = *InBumpBound->GetValue(req);
 	data->BumpStrength = *InBumpStrength->GetValue(req);
-
+/*
 	data->SSS_color.R = *InSSSR->GetValue(req);
 	data->SSS_color.G = *InSSSG->GetValue(req);
 	data->SSS_color.B = *InSSSB->GetValue(req);
@@ -2003,7 +2003,7 @@ MtlCookData3D *MtlCookInputs3D::ProcessCookInputs(Request *req, MtlCookData3D *d
 	data->SSS_on = *InSSSOn->GetValue(req);
 	data->SSSIOR = *InSSSIOR->GetValue(req);
 	data->SSSStrength = *InSSSStrength->GetValue(req);
-	data->SSSScale = *InSSSScale->GetValue(req);
+	data->SSSScale = *InSSSScale->GetValue(req);*/
 
 
 	// transmittance

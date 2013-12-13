@@ -397,15 +397,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\3D_MaterialBlinn.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\3D_MaterialCook.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\3D_MaterialGlass.cpp"
 				>
 			</File>
 		</Filter>

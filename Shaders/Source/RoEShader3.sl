@@ -984,9 +984,12 @@ surface RoEShader3
 		normal ia_normalCamera = 0;
 		
 		uniform string ia_envmap = "";
+		
+		float Mat_ID = 0;
 
 		output varying color oa_outColor = 0;
 		output varying color oa_outTransparency = 0;	
+		output varying float materialID = 0;
 		
 )
 
@@ -996,6 +999,8 @@ surface RoEShader3
 		
 		color _diff = 1;
 		color _transp = 0;
+		
+		
 		
 		
 		color _diffTex = 1;
@@ -1115,8 +1120,11 @@ surface RoEShader3
 		);
 		/*_diff = i_diffuse_color;*/
 		
-		Ci = oa_outColor;
 		Oi = 1 - oa_outTransparency;
+		/*Oi= Os;*/
+		Ci = Oi*oa_outColor;
+		/*materialID = Mat_ID;*/
+		
 	}
 
 }

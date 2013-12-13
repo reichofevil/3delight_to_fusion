@@ -2437,7 +2437,8 @@ void RendererRIB3D::CreateRmTextures()
 				float32 spec_expo = mtlPhongData->SpecularExponent;
 				float32 opacity = mtlPhongData->Opacity;
 				//TagList *tags();
-				float mtl_ID = mtlPhongData->GetMaterialID();
+				int32 mtl_ID = mtlPhongData->GetMaterialID();
+				
 				//float mtl_ID = 0;
 				
 				if (img)
@@ -2501,6 +2502,8 @@ void RendererRIB3D::CreateRmTextures()
 					MtlCookData3D *mtlCookData = (MtlCookData3D *) mtlData;
 					Image *img = NULL;
 					img = mtlCookData->DiffuseImg;
+
+					int32 mtl_ID = mtlCookData->GetMaterialID();
 
 					Image *img_inca = NULL;
 					img_inca = mtlCookData->IncaImg;
@@ -2621,6 +2624,8 @@ void RendererRIB3D::CreateRmTextures()
 					mtl.SSSScale = i_SSSScale;
 					mtl.SSSStrength = i_SSSStrength;
 
+					mtl.mtlID = mtl_ID;
+
 
 
 
@@ -2648,6 +2653,7 @@ void RendererRIB3D::CreateRmTextures()
 							CreateTempFilename(txPathFile, txFile, "Tex", "tx");
 							mtl.DiffuseFile = txFile;
 							mtl.DiffusePathFile = txPathFile;
+							mtl.opacity = opacity;
 							
 							const float width = 2.0f;		// this is not the sigma of the gaussian but rather the support of the filter kernal
 							rm->RiMakeTexture(tiffPathFile, txPathFile, edge, edge, rm->RiGaussianFilter, width, width, RI_NULL);
@@ -2887,7 +2893,7 @@ void RendererRIB3D::CreateRmTextures()
 				//throw FuException3D("Blinn zeugs: %s ", spec_intensity);
 				float32 spec_expo = mtlBlinnData->SpecularExponent;
 				float32 opacity = mtlBlinnData->Opacity;
-				float mtl_ID = mtlBlinnData->GetMaterialID();
+				int32 mtl_ID = mtlBlinnData->GetMaterialID();
 				//float mtl_ID = 0;
 
 				
@@ -2964,7 +2970,7 @@ void RendererRIB3D::CreateRmTextures()
 				//throw FuException3D("Blinn zeugs: %s ", spec_intensity);
 				float32 spec_expo = mtlBlinnData->SpecularExponent;
 				float32 opacity = mtlBlinnData->Opacity;
-				float mtl_ID = mtlBlinnData->GetMaterialID();
+				int32 mtl_ID = mtlBlinnData->GetMaterialID();
 				//float mtl_ID = 0;
 				
 				if (img)
@@ -3034,7 +3040,7 @@ void RendererRIB3D::CreateRmTextures()
 				float32 opacity = mtlWardData->Opacity;
 				float32 spreadX = mtlWardData->SpreadX;
 				float32 spreadY = mtlWardData->SpreadY;
-				float mtl_ID = mtlWardData->GetMaterialID();
+				int32 mtl_ID = mtlWardData->GetMaterialID();
 				//float mtl_ID = 0;
 				
 					mtl.spec_color = spec_color;
@@ -3058,8 +3064,9 @@ void RendererRIB3D::CreateRmTextures()
 					float32 spec_intensity = mtlStdData->SpecularIntensity;
 					float32 spec_expo = mtlStdData->SpecularExponent;
 					float32 opacity = mtlStdData->Opacity;
-					float mtl_ID = mtlStdData->GetMaterialID();
+					int32 mtl_ID = mtlStdData->GetMaterialID();
 					//float mtl_ID = 0;
+					//throw FuException3D("mat_id_call_1: %d", mtl_ID);
 
 					if (img)
 					{
@@ -3457,8 +3464,8 @@ RtLightHandle RendererRIB3D::CreateDirectionalLight2(Node3D *n)
 
    RtToken tokens[nParams] = 
 	{ 
-		"float atten", 
-		"colorlightcolor", 
+		"float intensity", 
+		"color lightcolor", 
 		"point from", 
 		"point to",
 		"string shadowname",
@@ -3497,7 +3504,7 @@ RtLightHandle RendererRIB3D::CreateDirectionalLight(Node3D *n)
 
    RtToken tokens[nParams] = 
 	{ 
-		"float atten", 
+		"float intensity", 
 		"color lightcolor", 
 		"point from", 
 		"point to",
@@ -4909,6 +4916,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		float mtl_ID = mtl->mtlID;
 		//float mtl_ID = 0;
 		
+		
 		const int n = 10;
 		
 		RtToken tokens[n] =
@@ -4969,6 +4977,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		
 		float mtl_ID = mtl->mtlID;
 		//float mtl_ID = 0;
+		
 
 		const int n = 10;
 		
@@ -5111,12 +5120,13 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 		float32 ia_SSSIOR = mtl->SSSIOR;
 		float32 ia_SSSStrength = mtl->SSSStrength;
 		float32 ia_SSSScale = mtl->SSSScale;
-
+		
+		float mtl_ID = mtl->mtlID;
 
 
 		Color4f ia_incandescence = mtl->Incan;
 	
-		const int n = 42;
+		const int n = 43;
 		//throw FuException3D("env path map 3: %s", txPathFile);
 
 		
@@ -5158,6 +5168,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			"float ia_sss_scale",
 			"float ia_do_gi",
 			"float ia_gi_samples",
+			"float materialID",
 			"uniform string ia_envmap",
 			"uniform string diffTex",
 			"uniform string reflRoughTex",
@@ -5206,6 +5217,7 @@ void RendererRIB3D::RenderMaterial(Material *mtl)
 			&ia_SSSScale,
 			&enableGI,
 			&GI_Val,
+			&mtl_ID,
 			&txPathFile,
 			&filename,
 			&refl_rough_tex,
