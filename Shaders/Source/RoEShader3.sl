@@ -1002,15 +1002,17 @@ surface RoEShader3
 		
 		
 		
-		
+		color _transTex = 0;
 		color _diffTex = 1;
 		if (diffTex != "")
 		{
 			_diffTex = color texture (diffTex);
+			_transTex = 1-comp(color texture(diffTex),3);
 		}
 		else
 		{
 			_diffTex = ia_diffuse_color;
+			_transTex = ia_transparency;
 		}
 		
 		color _reflTex = 1;
