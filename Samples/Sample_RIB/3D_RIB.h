@@ -81,6 +81,7 @@ enum RendererRM_Tags ENUM_TAGS
    RenRM_PtrBaseTag = RENDERER_RM_BASE + TAG_PTR,
    RenRM_RenderFileName,			// (NULL) filename for render.dll
    RenRM_ShaderPathName,
+   RenRM_ProcPathName,
 
    RenRM_ObjBaseTag = RENDERER_RM_BASE + TAG_OBJECT,
 
@@ -102,6 +103,7 @@ protected:
    Input *InTexMake;
    Input *InShader;
    Input *InShaderPath;
+   Input *InProcPath;
 
    Input *InLightingNest;
    //Input *InLightingEnabled;			-- use RendererBase3D input for this
@@ -390,6 +392,8 @@ protected:
 	float32 m_radius;
 	float32 m_radius2;
 	int m_type;
+	uint32 p_type;
+	float32 p_radius, p_radius_scale;
 	float32 m_theta;
 	float32 m_zmin;
 	float32 m_zmax;
@@ -397,6 +401,7 @@ protected:
 	bool m_BottomCap;
 	bool m_TopCap;
 	const char* m_path;
+	const char* p_type_string;
 
 	const char* fit_type;
 	float32 fit_out;
@@ -427,6 +432,7 @@ protected:
 	std::vector<char*> TempPathFiles;	// list of temporary pathfiles
 	char TempPath[_MAX_PATH];				// the directory where temporary (texture) files will be stored
 	const char *ShaderPath;
+	const char *ProcPath;
 
 public:
    RendererRIB3D(const Registry *reg, const ScriptVal &table, const TagList &tags);
@@ -469,6 +475,7 @@ protected:
 
 	void SetTextureSearchPath();
 	void SetShaderSearchPath();
+	void SetProcSearchPath();
 	void CreateTempFilename(char *&pathfile, char *&file, const char *prefix, const char *suffix);
 	void FreeTempFiles();
 
@@ -484,7 +491,7 @@ protected:
 	void RenderCylinder(float32 g_radius,float32 g_theta, float32 g_zmin, float32 g_zmax);
 	void RenderCone(float32 g_radius,float32 g_theta, float32 g_height);
 	void RenderRib(const char *g_path);
-	void RenderPartio(const char *g_path, float32 g_size, uint32 g_type);
+	void RenderPartio(const char *g_path, uint32 g_type, float32 g_radius, float32 g_radius_scale);
 	void RenderParticles(Geometry3D *g);
 
 	RtLightHandle CreateAmbientLight(Node3D *n);

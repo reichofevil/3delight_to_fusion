@@ -230,8 +230,7 @@ FuRegisterClass(COMPANY_ID_DOT + CLSID_Renderer_RIB, CT_Renderer3D)
    REGS_Name,					"3Delight",	// this is the name that appears in the Renderer3D.RendererType combobox	
    REGS_OpDescription,		"A RIB Renderer",
 	REG_Hide,					FALSE,				// this can be set to true to prevent your renderer from showing up in Renderer3D.RendererType
-   //REG_SupportsDoD, TRUE,
-   REG_SupportsDoD,			TRUE,
+   REG_SupportsDoD,			TRUE,		// Indicates that this tool supports DoD/RoI,
    REG_NoMotionBlurCtrls, TRUE,
 
 	TAG_DONE);
@@ -311,6 +310,16 @@ bool RendererRIB3D::AddInputsTagList(TagList &tags)
          TAG_DONE);
 
 	  InShaderPath = AddInput("shader search path", "ShaderPath",			// TODO - remove extra inputs here
+         LINKID_DataType,		CLSID_DataType_Text,
+         INPID_InputControl,	FILECONTROL_ID,
+         INP_Required,			FALSE,
+         INP_External,			FALSE,
+         INP_DoNotifyChanged,	TRUE,
+		 FC_PathBrowse,			TRUE,
+         //FCS_FilterString,		"EXE Files (*.exe)|*.exe",		
+         TAG_DONE);
+
+	  InProcPath = AddInput("procedural search path", "ProcPath",			// TODO - remove extra inputs here
          LINKID_DataType,		CLSID_DataType_Text,
          INPID_InputControl,	FILECONTROL_ID,
          INP_Required,			FALSE,
@@ -765,6 +774,7 @@ void RendererRIB3D::ShowInputs(bool visible)
       InTexMake->ShowInputControls();
       InShader->ShowInputControls();
 	  InShaderPath->ShowInputControls();
+	  InProcPath->ShowInputControls();
 
 		InLightingNest->ShowInputControls();
 		InLightingEnabled->ShowInputControls();
@@ -822,6 +832,7 @@ void RendererRIB3D::ShowInputs(bool visible)
       InTexMake->HideInputControls();
       InShader->HideInputControls();
 	  InShaderPath->HideInputControls();
+	  InProcPath->HideInputControls();
 
 		InLightingNest->HideInputControls();
 		InLightingEnabled->HideInputControls();
@@ -947,7 +958,11 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
    Text *ShaderPathText = (Text *) InShaderPath->GetValue(req);
    const char *ShaderPathFile = (const char *)*(ShaderPathText);
    rmTags.Add(RenRM_ShaderPathName, ShaderPathFile);
-
+  
+   // pathname for procedural search
+   Text *ProcPathText = (Text *) InProcPath->GetValue(req);
+   const char *ProcPathFile = (const char *)*(ProcPathText);
+   rmTags.Add(RenRM_ProcPathName, ProcPathFile);
 
 	// shading rate
 	double shadingRate = *InShadRate->GetValue(req);
@@ -1062,18 +1077,36 @@ bool RendererRIB3D::ProcessTagList(Request *req, const TagList &tags)
 
 	//ImageDomain *inROI = req->GetRoI();
 	//reqRoI->ValidWindow();
+	// Obtain the Region of Interest requested for this render
+	const AutoImageRoI reqRoI(req);
+
+	// Obtain the Domain of Definition for the tool connected to InImage
+	//const AutoImageDoD inpDoD(req, InImage);
+
+	// The maximum possible amount of data we would need to process from the
+	// input Image, is the intersection of the DoD from the upstream connected
+	// tool, and the data contained in the actual Image received.
+	//FuRectInt dataWindow(inpDoD->ValidWindow & in->DataWindow);
+
+	// If this is a pre-calc render, then we should generate an Image that is the
+	// largest possible, given the upstream DoD and the input Image, as the results
+	// from this render will be used as the DoD for this tool. Because of this,
+	// during the pre-calc, there will be no RoI. We need to check for that. If
+	// there is a RoI, then we can restrict our output Image based on that.
+	if (reqRoI)
+		dataWindow &= reqRoI->ValidWindow;
 	
 
-	//int32 *ROI_left = &ValidWindow->left;
-	//int32 *ROI_right = &ValidWindow->right;
-	//int32 *ROI_top = &ValidWindow->top;
-	//int32 *ROI_bottom = &ValidWindow->bottom;
+	int32 ROI_left = dataWindow.left;
+	int32 ROI_right = dataWindow.right;
+	int32 ROI_top = dataWindow.top;
+	int32 ROI_bottom = dataWindow.bottom;
 	//throw FuException3D("ROI: %d %d %d %d", ROI_left,ROI_top,ROI_right,ROI_bottom);
 		
-	//rmTags.Add(RenRM_ValidWindowleft, ROI_left);
-	//rmTags.Add(RenRM_ValidWindowright, ROI_right);
-	//rmTags.Add(RenRM_ValidWindowbottom, ROI_bottom);
-	//rmTags.Add(RenRM_ValidWindowtop, ROI_top);
+	rmTags.Add(RenRM_ValidWindowleft, ROI_left);
+	rmTags.Add(RenRM_ValidWindowright, ROI_right);
+	rmTags.Add(RenRM_ValidWindowbottom, ROI_bottom);
+	rmTags.Add(RenRM_ValidWindowtop, ROI_top);
 	
 	
 	// merge tags supplied by Renderer3D into ours
@@ -1449,6 +1482,7 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 		}
 	//path to shader files
 	ShaderPath = (const char *) tags.GetPtr(RenRM_ShaderPathName, NULL);
+	ProcPath = (const char *) tags.GetPtr(RenRM_ProcPathName, NULL);
 	//photons
 	/*DoPhotons = tags.GetBool(RenRM_DoPho,false);
 	PhotonCount =tags.GetDouble(RenRM_PhoSamples,10000.0);
@@ -1547,11 +1581,10 @@ void RendererRIB3D::ParseRenderAttrs(TagList &tags)
 	shutterend = tags.GetDouble(RenRM_shutterEnd, 1.0);
 	shutterstart = tags.GetDouble(RenRM_shutterStart,0.0);
 
-	//ROI
-	//RM_ROI_Left = tags.GetDouble(RenRM_ValidWindowleft,0.0);
-	//RM_ROI_Right = tags.GetDouble(RenRM_ValidWindowright,0.0);
-	//RM_ROI_Top = tags.GetDouble(RenRM_ValidWindowtop,0.0);
-	//RM_ROI_Bottom = tags.GetDouble(RenRM_ValidWindowbottom,0.0);
+	RM_ROI_Left = tags.GetDouble(RenRM_ValidWindowleft,0.0);
+	RM_ROI_Right = tags.GetDouble(RenRM_ValidWindowright,0.0);
+	RM_ROI_Top = tags.GetDouble(RenRM_ValidWindowtop,0.0);
+	RM_ROI_Bottom = tags.GetDouble(RenRM_ValidWindowbottom,0.0);
 	//throw FuException3D("ROI: %f %f %f %f", RM_ROI_Left,RM_ROI_Top,RM_ROI_Right,RM_ROI_Bottom);
 
 	//tried ROI here, but somehow i failed
@@ -1889,6 +1922,29 @@ void RendererRIB3D::SetShaderSearchPath()
 	// seem to expect only double indirection.
 	rm->RiOptionV("searchpath", nParams, tokens, params);
 }
+void RendererRIB3D::SetProcSearchPath()
+{
+	char path3[_MAX_PATH];
+	//const char ShaderPathProc[10] = "d://proc/";
+	strcpy(path3,ProcPath); // copy string one into the result.
+	const char *source = ";@;";
+	strcat(path3, source);
+	// change all the '\' to '/'
+	int len = strlen(path3);
+	for (int i = 0; i < len; i++)
+		if (path3[i] == '\\')
+			path3[i] = '/';
+
+	char **pPath3 = (char **) &path3;
+	const int ppParams = 1;
+	RtToken pptokens[ppParams] = { "procedural" };
+	RtPointer ppparams[ppParams] = { &pPath3 };		
+
+		// NOTE:  If the below line crashed, the triple indirection to the path seems to work with PRMan/3Delight but some other renderers 
+		// seem to expect only double indirection.
+	rm->RiOptionV("searchpath", ppParams, pptokens, ppparams);
+}
+
 
 void RendererRIB3D::RenderScene()
 {
@@ -1951,7 +2007,7 @@ void RendererRIB3D::RenderScene()
 		
 		//for ROI
 		//bool ROI_NULL = ROI->IsNull();
-		//rm->RiCropWindow(ROI->left,ROI->top,ROI->right,ROI->bottom);
+		//rm->RiCropWindow(RM_ROI_Left,RM_ROI_Top,RM_ROI_Right,RM_ROI_Bottom);
 		
 
 		////enable raytrace for everyting
@@ -1980,6 +2036,8 @@ void RendererRIB3D::RenderScene()
 		// tell renderman that it needs to search for shaders in the given directory
 		
 		SetShaderSearchPath();
+
+		SetProcSearchPath();
 
 		// Create a list of all the surfaces in the scene.
 		CreateSurfaceList();
@@ -2152,9 +2210,15 @@ void RendererRIB3D::RenderScene()
 
 		//raytracing depth
 		int trace_number = 2;
-		RtToken Stokens[] = { "maxdepth" };
+		RtToken Stokens[] = { "integer maxdepth" };
 		RtPointer Sparams[] = { &trace_number };
 		rm->RiOptionV("trace", 1, Stokens , Sparams);
+
+		//Option "trace" "int diffuseraycache" 1
+		int trace_cache = 1;
+		RtToken Ctokens[] = { "integer diffuseraycache" };
+		RtPointer Cparams[] = { &trace_cache };
+		rm->RiOptionV("trace", 1, Ctokens , Cparams);
 
 		//photons
 		/*if (DoPhotons){
@@ -3987,14 +4051,14 @@ void RendererRIB3D::RenderNode(Node3D *n)
    if (n)
    {
 	  rm->RiAttributeBegin();
-	  if (n->IsRenderable)
-	  {
+	  //if (n->IsRenderable)
+	  //{
 		FuID node_name = n->GetName();
 		int name_number = 1;
 		RtToken name_tokens2[] = { "string name" };
 		RtPointer name_params2[] = { &node_name };
 		rm->RiAttributeV("identifier",1, name_tokens2, name_params2);
-	  }
+		//}
 	  /*if (DoPhotons){
 		int pho_number = 1;
 		RtToken Ptokens2[] = { "integer photon" };
@@ -4044,7 +4108,7 @@ void RendererRIB3D::RenderNode(Node3D *n)
       RenderNode(n->Child);
 	  //if(DoMoBlur) rm->RiMotionEnd;
 	  //else rm->RiTransformEnd();				// restore the pushed transform
-
+	  rm->RiTransformEnd();
 	  rm->RiAttributeEnd();
       RenderNode(n->Next);
    }
@@ -4260,7 +4324,32 @@ void RendererRIB3D::RenderSurface(Node3D *n)
 							p->Recycle();
 						}
 						//throw FuException3D("SurfacePlaneInput found and has data: %s", m_path);
-						RenderPartio(m_path, 1, 1);
+						Parameter *p2 = data->m_Operator->FindInput("RoE.PartioPlaneInputs.RenderType")->GetSource(Document->GetCurrentTime());
+							if (p2)
+								{
+									p_type = *(Number *)p2;
+									p2->Recycle();
+									
+								}
+						Parameter *p3 = data->m_Operator->FindInput("RoE.PartioPlaneInputs.pradius")->GetSource(Document->GetCurrentTime());
+							if (p3)
+								{
+									p_radius = *(Number *)p3;
+									p3->Recycle();
+									
+								}
+						Parameter *p4 = data->m_Operator->FindInput("RoE.PartioPlaneInputs.pradius_scale")->GetSource(Document->GetCurrentTime());
+							if (p4)
+								{
+									p_radius_scale = *(Number *)p4;
+									p4->Recycle();
+									
+								}
+							//throw FuException3D("p_type: %d", p_type);
+
+							//if (p_type == 0) const char* p_type_string = "particle";
+
+						RenderPartio(m_path, p_type, p_radius, p_radius_scale);
 						
 					}
 					
@@ -5522,20 +5611,64 @@ void RendererRIB3D::RenderRib(const char* g_path)
 	rm->RiReadArchive(rib_tokens,NULL,RI_NULL);
 }
 
-void RendererRIB3D::RenderPartio(const char* g_path, float32 g_size, uint32 g_type)
+void RendererRIB3D::RenderPartio(const char* g_path,uint32 g_type, float32 g_radius, float32 g_radius_scale)
 {
-	char result2[_MAX_PATH];   // array to hold the result.
-		 	
-	strcpy(result2,g_path); // copy string one into the result.
-	// change all the '\' to '/'
+	char result2[_MAX_PATH+15];   // array to hold the result.
+	const char fFile[10] = " --file ";	 	
+	strcpy(result2,fFile); // copy string one into the result.
+	
+	strcat(result2,g_path); // copy string one into the result.
+	
+	 //change all the '\' to '/'
 	int len = strlen(result2);
 	for (int i = 0; i < len; i++)
 		if (result2[i] == '\\')
 			result2[i] = '/';
+
 	const char* archive_path = result2;
+
+	//throw FuException3D("partio type : %s", archive_path);
+	
+	char result3[_MAX_PATH+35];
+	const char pptype[10] = " --type ";
+	strcpy(result3,pptype);
+	if (g_type == 1) p_type_string = "blobby";
+	else if (g_type == 2) p_type_string = "patch";
+	else if (g_type == 3) p_type_string = "sphere";
+	else if (g_type == 4) p_type_string = "disk";
+	else p_type_string = "particle";
+
+	strcat(result3,p_type_string);
+	strcat(result3,archive_path);
+	const char* type_p = result3;
+
+	char result4[_MAX_PATH+50];
+	const char ppptype[13] = " --radius ";
+	strcpy(result4,ppptype);
+	char ppradius[10];
+	sprintf(ppradius, "%f", g_radius);
+	strcat(result4,ppradius);
+	strcat(result4,type_p);
+
+	const char* type_pp = result4;
+		
+	
+	char result5[_MAX_PATH+50];
+	const char pppptype[20] = " --radius_scale ";
+	strcpy(result5,pppptype);
+	char pppradius[10];
+	sprintf(ppradius, "%f", g_radius_scale);
+	
+	strcat(result5,pppradius);
+	strcat(result5,type_pp);
+
+	const char* type_ppp = result5;
+	//throw FuException3D("partio type : %s", type_p);
+
 	RtPointer params[2];
 	params[0] = "partio43delight_procedural";
-	params[1] = "file D:/test.geo";
+	params[1] = (RtPointer) type_ppp;
+	//params[1] = (RtPointer) archive_path;
 	//RtToken rib_tokens = (RtToken) result2;
 	rm->RiProcDynamicLoad( &params , NULL);
 	//rm->RiReadArchive(rib_tokens,NULL,RI_NULL);

@@ -4,6 +4,10 @@
 #include "3D_MaterialBase.h"
 #include "3D_SurfaceBase.h"
 
+const FuID CLSID_Partio_Plane_Operator ="PartioPlaneOperator";
+const FuID CLSID_Partio_Plane_Inputs ="PartioPlaneInputs";
+const FuID CLSID_Partio_Plane_Data="PartioPlaneData";
+
 
 class PartioPlaneData3D : public SurfaceData3D
 {
@@ -15,6 +19,8 @@ public:
 	uint32	WidthSub;
 	uint32	HeightSub;
 	const char* RIBPath;
+	uint32 ptype;
+	float32 pradius, pradius_scale;
 
 public:
 	PartioPlaneData3D();
@@ -39,7 +45,7 @@ public:
 	Input *InLockSizeXY;
 	Input *InWidth, *InHeight;
 	Input *InSubdivisionWidth, *InSubdivisionHeight;
-	Input *InRIBFile;
+	Input *InRIBFile, *InType, *InRadius, *InRadiusScale;
 
 	int OldMode;
 	bool IsImagePlane;

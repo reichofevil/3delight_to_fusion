@@ -37,12 +37,14 @@ FuRegisterClass(COMPANY_ID_DOT "PartioLD", CT_3DFilterSource)		// for internal e
 	TAG_DONE);
 
 
+
+
 ImagePlane3D2::ImagePlane3D2(const Registry *reg, const ScriptVal &table, const TagList &tags) : BaseClass(reg, table, tags)
 {
 	// add the plane's geometry inputs to the controls page
 	AddControlPage("Controls");
 
-	if (InSurfacePlane = (PartioPlaneInputs3D *) ClassRegistry->New(COMPANY_ID_DOT + CLSID_Surface_Plane_Inputs, CT_SurfaceInputs3D, table, tags))
+	if (InSurfacePlane = (PartioPlaneInputs3D *) ClassRegistry->New(COMPANY_ID_DOT + CLSID_Partio_Plane_Inputs, CT_SurfaceInputs3D, table, tags))
 	{
 		RegisterInputs(InSurfacePlane);
 		InSurfacePlane->IsImagePlane = true;

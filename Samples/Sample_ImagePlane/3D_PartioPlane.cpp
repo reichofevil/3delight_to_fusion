@@ -18,13 +18,15 @@
 #include "3D_AABB.h"
 #include "3D_PartioPlane.h"
 
+#include "Partio.h"
+
 
 
 //-------------------------------
 // PartioPlaneInputs3D class
 //-------------------------------
 
-FuRegisterClass(COMPANY_ID_DOT + CLSID_Surface_Plane_Inputs, CT_SurfaceInputs3D)
+FuRegisterClass(COMPANY_ID_DOT + CLSID_Partio_Plane_Inputs, CT_SurfaceInputs3D)
 	REGS_Name,					COMPANY_ID "Partio Loader",
 	TAG_DONE);
 
@@ -124,6 +126,34 @@ bool PartioPlaneInputs3D::AddInputsTagList(TagList &tags)
 		FCS_FilterString,		"all (*.*)|*.*",		
 		TAG_DONE);
 
+	InType = AddInput("RenderType", "RenderType",
+		LINKID_DataType, CLSID_DataType_Number,
+		INPID_InputControl, COMBOCONTROL_ID,
+		CCS_AddString, "Particle/Point",
+		CCS_AddString, "blobby",
+		CCS_AddString, "patch",
+		CCS_AddString, "sphere",
+		CCS_AddString, "disk",
+		TAG_DONE);
+
+	InRadius = AddInput("Radius", "pradius",
+			LINKID_DataType,		CLSID_DataType_Number,
+			INPID_InputControl,	SLIDERCONTROL_ID,
+			INP_MinScale,			0.0001,
+			INP_MaxScale,			10.0,
+			INP_Default,			1.0,
+			IC_Visible,				TRUE,
+			TAG_DONE);
+
+	InRadiusScale = AddInput("Radius Scale", "pradius_scale",
+			LINKID_DataType,		CLSID_DataType_Number,
+			INPID_InputControl,	SLIDERCONTROL_ID,
+			INP_MinScale,			0.0001,
+			INP_MaxScale,			10.0,
+			INP_Default,			1.0,
+			IC_Visible,				TRUE,
+			TAG_DONE);
+
 	BaseClass::AddInputsTagList(tags);
 
 	return true;
@@ -168,6 +198,12 @@ Data3D *PartioPlaneInputs3D::ProcessTagList(Request *req, Data3D *data, TagList 
 		
 		Text *RibText = (Text *) InRIBFile->GetValue(req);
 		ret->RIBPath = (const char *)*(RibText);
+
+		ret->ptype = *InType->GetValue(req);
+		ret->pradius = *InRadius->GetValue(req);
+		ret->pradius_scale = *InRadiusScale->GetValue(req);
+		
+
 
 		if (IsImagePlane)
 		{
@@ -228,7 +264,7 @@ void PartioPlaneInputs3D::ShowInputs(bool visible)
 #undef BaseClass
 #define ThisClass PartioPlaneData3D 
 #define BaseClass SurfaceData3D
-FuRegisterClass(COMPANY_ID_DOT + CLSID_Surface_Plane_Data, CT_SurfaceData3D)
+FuRegisterClass(COMPANY_ID_DOT + CLSID_Partio_Plane_Data, CT_SurfaceData3D)
 	REGS_Name,					COMPANY_ID "Plane Surface Data",
 	TAG_DONE);
 
@@ -272,11 +308,32 @@ bool PartioPlaneData3D::BuildBoundingBox()
 {
 	float32 hWidth = 0.5f * Width;
 	float32 hHeight = 0.5f * Height;
+	float32 hDepth  = 0.5f;
 	
-	AABBSet = true;
-	AABB.SetValue(Vector3f(-hWidth, - hHeight, 0.0f), Vector3f(hWidth, hHeight, 0.0f));
+	Vector3f bmin(-hWidth, -hHeight, -hDepth),bmax(hWidth, hHeight, hDepth);
 
-	return true;
+   	Partio::ParticlesData* pdata;
+	
+	if (RIBPath)pdata=Partio::read(RIBPath);
+	
+	if (pdata){
+		Partio::ParticleAttribute posAttr;
+		uint32 pnum = pdata->numParticles();
+		for (int i=0;i<pnum;i++)
+                    {
+                        const float* aapos=pdata->data<float>(posAttr,i);
+                        bmin[0]=min(bmin[0],aapos[0]);bmin[1]=min(bmin[1],aapos[1]);bmin[2]=min(bmin[2],aapos[2]);
+                        bmax[0]=max(bmax[0],aapos[0]);bmax[1]=max(bmax[1],aapos[1]);bmax[2]=max(bmax[2],aapos[2]);
+                    }
+		pdata->release();	
+	}
+	
+
+   AABBSet = true;
+
+   AABB.SetValue(bmin, bmax);
+
+   return true;
 }
 
 bool PartioPlaneData3D::CreateGeometryTagList(std::vector<Geometry3D*> &geometry, TagList &tags) // throws CMemoryException
