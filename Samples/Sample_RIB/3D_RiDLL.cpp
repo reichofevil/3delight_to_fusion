@@ -253,7 +253,8 @@ bool RmDLL::AttachTo(HMODULE &dll)
 	success = success && RiSolidBegin && RiSolidEnd;
 
 	RiObjectBegin = (PfnRiObjectBegin) GetProcAddress(dll, "RiObjectBegin");
-	success = success && RiObjectBegin;
+	RiObjectBeginV = (PfnRiObjectBeginV) GetProcAddress(dll, "RiObjectBeginV");
+	success = success && RiObjectBegin && RiObjectBeginV;
 
 	RiObjectEnd			= (PfnRiObjectEnd) GetProcAddress(dll, "RiObjectEnd");
 	RiObjectInstance	= (PfnRiObjectInstance) GetProcAddress(dll, "RiObjectInstance");
@@ -459,6 +460,7 @@ void RmDLL::Detach()
 	RiSolidEnd = NULL;
 
 	RiObjectBegin = NULL;
+	RiObjectBeginV = NULL;
 
 	RiObjectEnd = NULL;
 	RiObjectInstance = NULL;

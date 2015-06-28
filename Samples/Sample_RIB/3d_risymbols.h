@@ -240,6 +240,7 @@ typedef RtVoid (RI_DECL *PfnRiSolidBegin)(RtToken operation);
 typedef RtVoid (RI_DECL *PfnRiSolidEnd)();
 
 typedef RtObjectHandle (RI_DECL *PfnRiObjectBegin)();
+typedef RtObjectHandle (RI_DECL *PfnRiObjectBeginV)(RtInt n, RtToken token[], RtPointer parms[]);
 
 typedef RtVoid (RI_DECL *PfnRiObjectEnd)();
 typedef RtVoid (RI_DECL *PfnRiObjectInstance)(RtObjectHandle handle);

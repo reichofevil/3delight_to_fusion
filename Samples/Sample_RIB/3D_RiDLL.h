@@ -193,6 +193,7 @@ public:
 	PfnRiSolidEnd RiSolidEnd;
 
 	PfnRiObjectBegin RiObjectBegin;
+	PfnRiObjectBeginV RiObjectBeginV;
 
 	PfnRiObjectEnd RiObjectEnd;
 	PfnRiObjectInstance RiObjectInstance;
